@@ -9,17 +9,17 @@ print("\nDigite o local o qual você deseja fazer a avaliação de desempenho\n"
 AD = input("[F] para Fortaleza, [S] para São Paulo ou ainda [I] para o ITA: ") # AD = altitude-densidade
 
 if AD == 'F':
-    rho = 1.225 # Densidade estimada em 0m (Apêndice A - ANDERSON, 2015)
+    p = 1.225 # Densidade padrão estimada em 0m (Apêndice A - ANDERSON, 2015)
 elif AD == 'S':
-    rho = 1.156 # Densidade estimada em 600m (Apêndice A - ANDERSON, 2015)
+    p = 1.156 # Densidade padrão estimada em 600m (Apêndice A - ANDERSON, 2015)
 elif AD == 'I':
-    rho = 1.090 # Densidade estimada em 1200m (Apêndice A - ANDERSON, 2015)
+    p = 1.090 # Densidade padrão estimada em 1200m (Apêndice A - ANDERSON, 2015)
 
 os.system("cls")
 
 # Instâncias (inputs) das funções de desempenho
 
-det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.524, 0.0067, 0.28, 2.29, 1.366, rho, '15x10')
+det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.524, 0.0067, 0.28, 2.29, 1.366, p, '15x10')
 
 '''
 1º. gravidade em m/s² (g)
@@ -30,12 +30,13 @@ det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.524, 0.0067, 0.28, 2.29, 1.366
 6º. altura da asa em relação ao solo (hw)
 7º. envergadura da asa (bw)
 8º. área da asa (Sw)
-9º. tipo de hélice (prop)
+9º. densidade padrão local de análise (p)
+10º tipo de hélice (prop)
 '''
 
 # Mtow e Estol
 print(f"O mtow máximo encontrado é {det1.mtow():.4} kg\n")
-#print(f"O mtow utilizado é {det1.Mtow} kg\n")
+#print(f"A densidade encontrada é {det1.altitude_densidade():.2} kg/m³\n")
 print(f"A velocidade de estol é {det1.vel_estol():.4} m/s\n")
 
 # Decolagem
@@ -50,7 +51,7 @@ print(f"O ângulo de subida para a velocidade de decolagem é {det1.subida(det1.
 print(f"A máxima razão de subida é {det1.subida(det1.vel_liftoff())[0]:.4} m/s")
 print(f"O ângulo de subida para a máxima razão de subida é {det1.subida(det1.vel_liftoff())[2]:.4}°")
 print(f"A velocidade durante a máxima razão de subida é {det1.subida(det1.vel_liftoff())[1]:.5} m/s\n")
-det1.gráfico()
+#det1.gráfico()
 
 # Cruzeiro
 print(f"A velocidade de máximo alcance é {det1.vel_max_alcance():.5} m/s")
