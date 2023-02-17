@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class desempenho:
 
-    def __init__(self, g, mu, K, Clmax, Cdmin, hw, bw, Sw, rho, prop):
+    def __init__(self, g, mu, K, Clmax, Cdmin, hw, bw, Sw, p, prop):
         self.g = g
         self.mu = mu
         self.K = K
@@ -16,20 +16,36 @@ class desempenho:
         self.hw = hw
         self.bw = bw
         self.Sw = Sw
-        self.rho = rho
+        self.p = p
+        self.rho = desempenho.altitude_densidade(self)
         self.prop = prop
-        #self.Mtow = 19.7 # Valor calculado no projeto conceitual (MDO)
         self.Mtow = desempenho.mtow(self) # Mtow máximo calculado
         self.W = self.Mtow*self.g
         #self.tr = curvas.curva_TR(self) # Equação polinomial obtida de Tr
         pass
 
-    # p0 = 1,225; 
-    # k = 0,000022558
-    # Pl pressão local
-    # T0 e P0 = temperatura e pressão de referência 
-    #h = (T0./0.0065).*(1.-((Pl./P0)./(Tk./T0)).^0.234959)
-    #p = (1.225 .*(1.-(0.000022558.*h)).^4.2561)
+    def altitude_densidade(self):
+        # Pressão e temperatura locais, e densidade e altitude-densidade encontradas:
+        ''' Fortaleza = 1014 hPa, 30°C (303.15 K), 1.165 kg/m³, 517.817 m
+            São Paulo = 1013 hPA, 28°C (301.15 K), 1.068 kg/m³, 459.795 m
+            S.J.C.    =  950 hPa, 22°C (295.15 K), 0.997 kg/m³, 911.870 m
+        '''
+        # Algumas constantes para o cálculo de densidade pela altitude-densidade #
+        k = 0.000022558 # valor cte. desconhecido
+        P0, T0 = 1013.25, 288.15 # pressão e temperatura de referência ao nível do mar
+        # -------------------
+        if self.p == 1.225:
+            rho_local = self.p # densidade-padrão à nivel do mar
+            P_local, T_local = 1014, 303.15 # pressão e temperatura máx médias em hPa e Kelvin (Fortaleza)
+        elif self.p == 1.156:
+            rho_local = self.p # densidade-padrão à nivel do mar
+            P_local, T_local = 1013, 301.15 # pressão e temperatura máx médias em hPa e Kelvin (São Paulo)
+        elif self.p == 1.090:
+            rho_local = self.p # densidade-padrão à nivel do mar
+            P_local, T_local = 950, 295.15 # pressão e temperatura máx médias em hPa e Kelvin (São Paulo)
+        Hp = (T0/0.0065)*(1-((P_local/P0)/(T_local/T0))**0.234959) # Altitude-Densidade (Hp)
+        #print(Hp, (rho_local*(1-(k*Hp))**4.2561))
+        return (rho_local*(1-(k*Hp))**4.2561) # densidade do ar
     
     def vel_estol(self): # Velocidade na qual a aeronave entra em 'stall'
         return m.sqrt((2*(self.W))/(self.rho*self.Sw*self.Clmax))
@@ -97,7 +113,7 @@ class desempenho:
 
     def cruzeiro(self):
         x = sp.symbols('x')
-        tr = 0.162*x**2 - 9.276*x + 135.8
+        tr = 0.1453*x**2 - 8.254*x + 120.8
         td = -0.0228*x**2 + 0.03431*x + 42.27
         equation = sp.Eq(td, tr)
         #print(sp.solveset(equation)) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
