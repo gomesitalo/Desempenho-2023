@@ -1,6 +1,6 @@
-# Classe de Desempenho do MDO 2023
+# Classe desempenho do código de integração de desempenho - 2023
 
-from teste_curvas1 import curvas
+from curvas import curvas
 import math as m
 import sympy as sp
 import matplotlib.pyplot as plt
@@ -25,27 +25,27 @@ class desempenho:
         pass
 
     def altitude_densidade(self):
-        # Pressão e temperatura locais, e densidade e altitude-densidade encontradas:
-        ''' Fortaleza = 1014 hPa, 30°C (303.15 K), 1.165 kg/m³, 517.817 m
-            São Paulo = 1013 hPA, 28°C (301.15 K), 1.068 kg/m³, 459.795 m
-            S.J.C.    =  950 hPa, 22°C (295.15 K), 0.997 kg/m³, 911.870 m
+        # Pressão e Temperatura locais, e Densidade e Altitude-Densidade encontradas/especuladas:
+        ''' Fortaleza =  1014 hPa, 30°C (303.15 K), 1.165 kg/m³, 517.817 m
+            São Paulo =   980 hPA, 25°C (298.15 K), 1.081 kg/m³, 697.336 m
+            S.J.C.    =   950 hPa, 22°C (295.15 K), 0.998 kg/m³, 911.870 m
         '''
         # Algumas constantes para o cálculo de densidade pela altitude-densidade #
-        k = 0.000022558 # valor cte. desconhecido
-        P0, T0 = 1013.25, 288.15 # pressão e temperatura de referência ao nível do mar
-        # -------------------
+        k = 0.000022558 # valor de cte. utilizada desconhecida (Tentar descobrir!)
+        P0, T0 = 1013.25, 288.15 # pressão e temperatura de referência ao nível do mar (Regulamento de 2023 / Apêndice 4)
+        # ------------------- #
         if self.p == 1.225:
-            rho_local = self.p # densidade-padrão à nivel do mar
+            rho_local = self.p # densidade-padrão à nivel do mar para 0m
             P_local, T_local = 1014, 303.15 # pressão e temperatura máx médias em hPa e Kelvin (Fortaleza)
         elif self.p == 1.156:
-            rho_local = self.p # densidade-padrão à nivel do mar
-            P_local, T_local = 1013, 301.15 # pressão e temperatura máx médias em hPa e Kelvin (São Paulo)
+            rho_local = self.p # densidade-padrão à nivel do mar para 600m
+            P_local, T_local = 980, 298.15 # pressão e temperatura máx médias em hPa e Kelvin (São Paulo)
         elif self.p == 1.090:
-            rho_local = self.p # densidade-padrão à nivel do mar
-            P_local, T_local = 950, 295.15 # pressão e temperatura máx médias em hPa e Kelvin (São Paulo)
+            rho_local = self.p # densidade-padrão à nivel do mar para 1200m
+            P_local, T_local = 950, 295.15 # pressão e temperatura máx médias em hPa e Kelvin (São José dos Campos)
         Hp = (T0/0.0065)*(1-((P_local/P0)/(T_local/T0))**0.234959) # Altitude-Densidade (Hp)
-        #print(Hp, (rho_local*(1-(k*Hp))**4.2561))
-        return (rho_local*(1-(k*Hp))**4.2561) # densidade do ar
+        #print(Hp, round((rho_local*(1-(k*Hp))**4.2561),3))
+        return round((rho_local*(1-(k*Hp))**4.2561),3) # densidade do ar
     
     def vel_estol(self): # Velocidade na qual a aeronave entra em 'stall'
         return m.sqrt((2*(self.W))/(self.rho*self.Sw*self.Clmax))
@@ -108,19 +108,24 @@ class desempenho:
         return max_rate_c, vel_h, max_ang_subida, rate_c, ang_subida
     
     def gráfico(self):
-        curvas.curva_ROC(self)
-        curvas.curva_TRxTD(self)
+        curvas.curva_ROC(self) # plota o gráfico da razão de subida # R/C
+        curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr em função da velocidade # Td(v) x Tr(v)
 
     def cruzeiro(self):
         x = sp.symbols('x')
-        tr = 0.1453*x**2 - 8.254*x + 120.8
-        td = -0.0228*x**2 + 0.03431*x + 42.27
-        equation = sp.Eq(td, tr)
+        tr = 0.1522*x**2 - 8.679*x + 127
+        td = -0.02562*x**2 + 0.03855*x + 47.5   #    0m
+        #td = -0.02418*x**2 + 0.0364*x + 44.83  #  600m
+        #td = -0.0228*x**2 + 0.03431*x + 42.27  # 1200m
+        equation = sp.Eq(td, tr) # Acha a equação de 'Td - Tr = 0'
         #print(sp.solveset(equation)) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
+        vt = [] # Vetor que guardará os valores de V.mín e V.máx, bem como as de Tmin e Tmáx. # vt = [[Vmin, Tmin],[Vmax, Tmax]]
         solutions = sp.solveset(equation)
         for i in solutions:
-            print(f'V = {i} m/s, T = {td.subs(x, i)} N')
-        pass
+            vt.append([i,td.subs(x,i)]) # Guarda os valores de V[i], Td[i] em vt
+        Vmin, Tmin = vt[0][0], vt[0][1]
+        Vmax, Tmax = vt[1][0], vt[1][1]
+        return Vmin, Vmax, Tmin, Tmax
 
     def pouso(self):
         D_Vland = 0.5*self.rho*((desempenho.vel_landing(self))**2)*self.Sw*desempenho.Cd_ideal(self)
@@ -140,9 +145,9 @@ class desempenho:
         Carga_util = [] # lista vazia para receber os valores de Sg, W e rho
         while rho <= 3:
             mtow = 10.0 # Mtow inicial
-            if rho == 1: rho = 1.225 # Troca o valor de rho = 1 para rho = 1.225 kg/m³
-            elif rho == 2: rho = 1.156 # Troca o valor de rho = 2 para rho = 1.156 kg/m³
-            elif rho == 3: rho = 1.090 # Troca o valor de rho = 3 para rho = 1.090 kg/m³
+            if rho == 1: rho = 1.165 # Troca o valor de rho = 1 para rho = 1.165 kg/m³
+            elif rho == 2: rho = 1.081 # Troca o valor de rho = 2 para rho = 1.081 kg/m³
+            elif rho == 3: rho = 0.998 # Troca o valor de rho = 3 para rho = 0.998 kg/m³
             while mtow <= 20:
                 W = mtow*self.g
                 T_Vlof_r2 = curvas.tracao(self, (1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2), rho) # Instâncias, 'Vlof/sqrt(2)', *args
@@ -156,18 +161,18 @@ class desempenho:
                     break
                 mtow += 0.1
                 #print("zero") # Usado para testar se não estaria preso em loop infinito (Não descomentar!)
-            if rho == 1.225: rho = 2
-            elif rho == 1.156: rho = 3
+            if rho == 1.165: rho = 2
+            elif rho == 1.081: rho = 3
             else: break
-        mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.225 and i[0] <= 50]
+        mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.165 and i[0] <= 50]
         mtowF = float(mtowF[-1])
-        mtowS = [i[1]/self.g for i in Carga_util if i[2] == 1.156 and i[0] <= 50]
+        mtowS = [i[1]/self.g for i in Carga_util if i[2] == 1.081 and i[0] <= 50]
         mtowS = float(mtowS[-1])
-        mtowI = [i[1]/self.g for i in Carga_util if i[2] == 1.090 and i[0] <= 50]
+        mtowI = [i[1]/self.g for i in Carga_util if i[2] == 0.998 and i[0] <= 50]
         mtowI = float(mtowI[-1])
         """ x1, x2, x3 = [],[],[] # Valores de distância de decolagem para diferentes pesos na densidade do ar de 0m, 600m e 1200m
         y1, y2, y3 = [],[],[] # Valores de Pesos (W) diferentes para deolagem na densidade do ar de 0m, 600m e 1200m
-        mtowF, mtowS, mtowI = 1,1,1 # Força as variáveis de mtow(rho) existirem no MDO
+        mtowF, mtowS, mtowI = 10,10,10 # Força as variáveis de mtow (kg) existirem no MDO
         for i in Carga_util:
             if i[2] == 1.225:
                 x1.append(i[0]) # Valores de dist. de decolagem com rho = 1.225 kg/m³
@@ -196,11 +201,11 @@ class desempenho:
         plt.legend()
         plt.axis("auto")
         plt.show()'''
-        if self.rho == 1.225:
+        if self.p == 1.225:
             return mtowF
-        elif self.rho == 1.156:
+        elif self.p == 1.156:
             return mtowS
-        elif self.rho == 1.090:
+        elif self.p == 1.090:
             return mtowI
         """ mtowF, mtowS, mtowI = 1,1,1
         mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.225 and i[0] <= 58] # Cria uma lista de valores para todo mtowF que obedece à condição de Sg

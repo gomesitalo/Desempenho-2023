@@ -1,4 +1,4 @@
-# Classe das curvas de tração, potência e R/C do MDO 2023
+# Classe das Curvas de tração, potência e R/C do código de integração de Desempenho - 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,18 +37,18 @@ class curvas:
             
             if rho:
                 Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.225:
+                if Rho == 1.165:
                     return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.156:
+                elif Rho == 1.081:
                     return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 1.090:
+                elif Rho == 0.998:
                     return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
             else:
-                if self.rho == 1.225:
+                if self.rho == 1.165:
                     return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
-                elif self.rho == 1.156:
+                elif self.rho == 1.081:
                     return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
-                elif self.rho == 1.090:
+                elif self.rho == 0.998:
                     return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
 
         if self.prop == '15x7':
@@ -63,18 +63,18 @@ class curvas:
 
             if rho:
                 Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.225:
+                if Rho == 1.165:
                     return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.156:
+                elif Rho == 1.081:
                     return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 1.090:
+                elif Rho == 0.998:
                     return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
             else:
-                if self.rho == 1.225:
+                if self.rho == 1.165:
                     return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
-                elif self.rho == 1.156:
+                elif self.rho == 1.081:
                     return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
-                elif self.rho == 1.090:
+                elif self.rho == 0.998:
                     return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
 
         if self.prop == '15x10':
@@ -89,18 +89,18 @@ class curvas:
 
             if rho:
                 Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.225:
+                if Rho == 1.165:
                     return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.156:
+                elif Rho == 1.081:
                     return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 1.090:
+                elif Rho == 0.998:
                     return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
             else:
-                if self.rho == 1.225:
+                if self.rho == 1.165:
                     return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif self.rho == 1.156:
+                elif self.rho == 1.081:
                     return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif self.rho == 1.090:
+                elif self.rho == 0.998:
                     return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
 
         if self.prop == '16x8':
@@ -115,18 +115,18 @@ class curvas:
 
             if rho:
                 Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.225:
+                if Rho == 1.165:
                     return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.156:
+                elif Rho == 1.081:
                     return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 1.090:
+                elif Rho == 0.998:
                     return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
             else:
-                if self.rho == 1.225:
+                if self.rho == 1.165:
                     return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif self.rho == 1.156:
+                elif self.rho == 1.081:
                     return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif self.rho == 1.090:
+                elif self.rho == 0.998:
                     return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
 
     def tracao_requerida(self, V, *rho):
@@ -162,22 +162,22 @@ class curvas:
         rho = 0
         while rho < 3:
             v = 1
-            if rho == 0: rho = 1.225
-            elif rho == 1: rho = 1.156
-            elif rho == 2: rho = 1.090
+            if rho == 0: rho = 1.165
+            elif rho == 1: rho = 1.081
+            elif rho == 2: rho = 0.998
             while v <= 40:
                 RoC = (curvas.potencia(self, v, rho)-curvas.potencia_requerida(self, v, rho))/self.W
                 if RoC >= 0: matriz_RoC.append([RoC, v, rho])
                 v += 0.01
-            if rho == 1.225: rho = 1
-            elif rho == 1.156: rho = 2
+            if rho == 1.165: rho = 1
+            elif rho == 1.081: rho = 2
             else: break
-        xF = [i[1] for i in matriz_RoC if i[2] == 1.225]
-        xS = [i[1] for i in matriz_RoC if i[2] == 1.156]
-        xI = [i[1] for i in matriz_RoC if i[2] == 1.090]
-        yF = [i[0] for i in matriz_RoC if i[2] == 1.225]
-        yS = [i[0] for i in matriz_RoC if i[2] == 1.156]
-        yI = [i[0] for i in matriz_RoC if i[2] == 1.090]
+        xF = [i[1] for i in matriz_RoC if i[2] == 1.165]
+        xS = [i[1] for i in matriz_RoC if i[2] == 1.081]
+        xI = [i[1] for i in matriz_RoC if i[2] == 0.998]
+        yF = [i[0] for i in matriz_RoC if i[2] == 1.165]
+        yS = [i[0] for i in matriz_RoC if i[2] == 1.081]
+        yI = [i[0] for i in matriz_RoC if i[2] == 0.998]
         plt.plot(xF, yF, ls='solid', lw='1', color='g', label='RoC em Fortaleza')
         plt.plot(xS, yS, ls='solid', lw='1', color='b', label='RoC em São Paulo')
         plt.plot(xI, yI, ls='solid', lw='1', color='r', label='RoC em SJC')
@@ -197,21 +197,21 @@ class curvas:
         Tr = [] # lista vazia para receber os valores de Tr, v e rho
         while rho < 3:
             v = 6 # velocidade inicial
-            if rho == 0: rho = 1.225
-            elif rho == 1: rho = 1.156
-            elif rho == 2: rho = 1.090
+            if rho == 0: rho = 1.165
+            elif rho == 1: rho = 1.081
+            elif rho == 2: rho = 0.998
             while v < 40:
                 v += 0.01
                 Cl = (2*self.W)/(rho*v**2*self.Sw)
                 Cd = self.Cdmin + self.K*Cl**2
                 Tr.append([self.W/(Cl/Cd), v, rho])
-            if rho == 1.225: rho = 1
-            elif rho == 1.156: rho = 2
+            if rho == 1.165: rho = 1
+            elif rho == 1.081: rho = 2
             else: break
-        x = [i[1] for i in Tr if i[2] == 1.225]
-        yF = [i[0] for i in Tr if i[2] == 1.225]
-        yS = [i[0] for i in Tr if i[2] == 1.156]
-        yI = [i[0] for i in Tr if i[2] == 1.090]
+        x = [i[1] for i in Tr if i[2] == 1.165]
+        yF = [i[0] for i in Tr if i[2] == 1.165]
+        yS = [i[0] for i in Tr if i[2] == 1.081]
+        yI = [i[0] for i in Tr if i[2] == 0.998]
         plt.plot(x, yF, ls='solid', lw='1', color='c', label='$T_R$ em F')
         plt.plot(x, yS, ls='solid', lw='1', color='y', label='$T_R$ em SP')
         plt.plot(x, yI, ls='solid', lw='1', color='m', label='$T_R$ em SJC')
@@ -223,15 +223,13 @@ class curvas:
         plt.ylabel('$TR_F$ ($N$)', fontsize=10)
         plt.legend()
         plt.show()
-        p1 = np.poly1d(np.polyfit(x,yI,n))
-        print(p1)
-        if self.rho == 1.225:
+        if self.rho == 1.165:
             p = np.poly1d(np.polyfit(x,yF,n))
             print(p)
-        elif self.rho == 1.156:
+        elif self.rho == 1.081:
             p = np.poly1d(np.polyfit(x,yS,n))
             print(p)
-        elif self.rho == 1.090:
+        elif self.rho == 0.998:
             p = np.poly1d(np.polyfit(x,yI,n))
             print(p)
         return p
