@@ -55,7 +55,9 @@ det1.gráfico()
 print(f"A velocidade de máximo alcance é {det1.vel_max_alcance():.5} m/s")
 print(f"A velocidade de máxima eficiência aerodinâmica é {det1.vel_max_autonomia():.5} m/s")
 print(f'A velocidade mínima da aeronave é {det1.cruzeiro()[0]:.5} m/s')
-print(f'A velocidade máxima da aeronave é {det1.cruzeiro()[1]:.5} m/s\n')
+print(f'A velocidade máxima da aeronave é {det1.cruzeiro()[1]:.5} m/s')
+print(f'A velocidade mínima durante o voo de cruzeiro é {det1.cruzeiro()[2]:.5} m/s')
+print(f'A velocidade máxima durante o voo de cruzeiro é {det1.cruzeiro()[3]:.5} m/s\n')
 #det1.cruzeiro()
 
 # Pouso
