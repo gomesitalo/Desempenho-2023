@@ -19,6 +19,7 @@ class desempenho:
         self.p = p
         self.rho = desempenho.altitude_densidade(self)
         self.prop = prop
+        #self.Mtow = 19.7 # Mtow máximo definido pelo MDO
         self.Mtow = desempenho.mtow(self) # Mtow máximo calculado
         self.W = self.Mtow*self.g
         #self.tr = curvas.curva_TR(self) # Equação polinomial obtida de Tr
@@ -30,8 +31,6 @@ class desempenho:
             São Paulo =   980 hPA, 25°C (298.15 K), 1.081 kg/m³, 697.336 m
             S.J.C.    =   950 hPa, 22°C (295.15 K), 0.998 kg/m³, 911.870 m
         '''
-        # Algumas constantes para o cálculo de densidade pela altitude-densidade #
-        k = 0.000022558 # valor de cte. utilizada desconhecida (Tentar descobrir!)
         P0, T0 = 1013.25, 288.15 # pressão e temperatura de referência ao nível do mar (Regulamento de 2023 / Apêndice 4)
         # ------------------- #
         if self.p == 1.225:
@@ -43,9 +42,9 @@ class desempenho:
         elif self.p == 1.090:
             rho_local = self.p # densidade-padrão à nivel do mar para 1200m
             P_local, T_local = 950, 295.15 # pressão e temperatura máx médias em hPa e Kelvin (São José dos Campos)
-        Hp = (T0/0.0065)*(1-((P_local/P0)/(T_local/T0))**0.234959) # Altitude-Densidade (Hp)
-        #print(Hp, round((rho_local*(1-(k*Hp))**4.2561),3))
-        return round((rho_local*(1-(k*Hp))**4.2561),3) # densidade do ar
+        hp = (T0/0.0065)*(1-((P_local/P0)/(T_local/T0))**0.234959) # Altitude-Densidade (Regulamento de 2023 / Apêndice 4)
+        rho =  round((rho_local*(1-(0.000022558*hp))**4.2561),3) # Densidade do ar (kg/m³) (Gudmundsson - Capítulo 16 / Eq. 19)
+        return rho # Retorna a densidade do ar corrigida pela altitude-densidade
     
     def vel_estol(self): # Velocidade na qual a aeronave entra em 'stall'
         return m.sqrt((2*(self.W))/(self.rho*self.Sw*self.Clmax))
@@ -112,20 +111,22 @@ class desempenho:
         curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr em função da velocidade # Td(v) x Tr(v)
 
     def cruzeiro(self):
-        x = sp.symbols('x')
-        tr = 0.1522*x**2 - 8.679*x + 127
-        td = -0.02562*x**2 + 0.03855*x + 47.5   #    0m
-        #td = -0.02418*x**2 + 0.0364*x + 44.83  #  600m
-        #td = -0.0228*x**2 + 0.03431*x + 42.27  # 1200m
-        equation = sp.Eq(td, tr) # Acha a equação de 'Td - Tr = 0'
-        #print(sp.solveset(equation)) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
         vt = [] # Vetor que guardará os valores de V.mín e V.máx, bem como as de Tmin e Tmáx. # vt = [[Vmin, Tmin],[Vmax, Tmax]]
-        solutions = sp.solveset(equation)
+        Vcmin, Vcmax = 0, 0 # De acordo com a JAR-VLA 335, são as velocidades mínima e máxima durante o voo de cruzeiro
+        x = sp.symbols('x')
+        tr = 0.1522*x**2 - 8.679*x + 127 # 0m (19,9kg)
+        td = -0.02562*x**2 + 0.03855*x + 47.5    #    0m
+        #td = -0.02377*x**2 + 0.03576*x + 44.08  #  600m
+        #td = -0.02195*x**2 + 0.03304*x + 40.69  # 1200m
+        equation = sp.Eq(td, tr) # Acha a equação de 'Td - Tr = 0'
+        solutions = sp.solveset(equation) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
         for i in solutions:
-            vt.append([i,td.subs(x,i)]) # Guarda os valores de V[i], Td[i] em vt
+            vt.append([i,td.subs(x,i)]) # Guarda os valores de V[i], Td[i] em 'vt'
         Vmin, Tmin = vt[0][0], vt[0][1]
         Vmax, Tmax = vt[1][0], vt[1][1]
-        return Vmin, Vmax, Tmin, Tmax
+        Vcmin = 2.4*m.sqrt(self.W/self.Sw)
+        Vcmax = 0.9*Vmax
+        return Vmin, Vmax, Vcmin, Vcmax
 
     def pouso(self):
         D_Vland = 0.5*self.rho*((desempenho.vel_landing(self))**2)*self.Sw*desempenho.Cd_ideal(self)
@@ -140,7 +141,10 @@ class desempenho:
 
     #def envelope_de_voo():
 
-    def mtow(self):
+    #def mtow_obstaculo(self):
+
+
+    def mtow(self): # Mtow máximo para uma decolagem e m 'x' metros
         rho = 1 # parâmetro de densidade que auxiliará a percorrer a lista
         Carga_util = [] # lista vazia para receber os valores de Sg, W e rho
         while rho <= 3:
@@ -164,11 +168,11 @@ class desempenho:
             if rho == 1.165: rho = 2
             elif rho == 1.081: rho = 3
             else: break
-        mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.165 and i[0] <= 50]
+        mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.165 and i[0] <= 50] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])
-        mtowS = [i[1]/self.g for i in Carga_util if i[2] == 1.081 and i[0] <= 50]
+        mtowS = [i[1]/self.g for i in Carga_util if i[2] == 1.081 and i[0] <= 50] # Retorna o valor máximo do Mtow em 600m
         mtowS = float(mtowS[-1])
-        mtowI = [i[1]/self.g for i in Carga_util if i[2] == 0.998 and i[0] <= 50]
+        mtowI = [i[1]/self.g for i in Carga_util if i[2] == 0.998 and i[0] <= 50] # Retorna o valor máximo do Mtow em 1200m
         mtowI = float(mtowI[-1])
         """ x1, x2, x3 = [],[],[] # Valores de distância de decolagem para diferentes pesos na densidade do ar de 0m, 600m e 1200m
         y1, y2, y3 = [],[],[] # Valores de Pesos (W) diferentes para deolagem na densidade do ar de 0m, 600m e 1200m
