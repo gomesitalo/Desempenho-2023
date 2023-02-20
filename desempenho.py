@@ -142,7 +142,7 @@ class desempenho:
     #def envelope_de_voo():
 
     #def mtow_obstaculo(self):
-
+        
 
     def mtow(self): # Mtow máximo para uma decolagem e m 'x' metros
         rho = 1 # parâmetro de densidade que auxiliará a percorrer a lista
