@@ -1,6 +1,6 @@
 # Função principal da classe desempenho
 
-from desempenho import desempenho
+from teste_desempenho1 import desempenho
 import os
 os.system("cls")
 
@@ -42,8 +42,8 @@ print(f"A velocidade de decolagem é {det1.vel_liftoff():.5} m/s")
 print(f"A aceleração média no momento de decolagem é {det1.decolagem_obstaculo()[0]:.4} m/s²")
 print(f"A distância de corrida no solo é {det1.decolagem_obstaculo()[1]:.5} m")
 print(f"A distância de rotação é {det1.decolagem_obstaculo()[2]:.5} m")
-print(f"A distância de transição é {det1.decolagem_obstaculo()[3]:.4} m")
-print(f"A distância de subida ao obstáculo é {det1.decolagem_obstaculo()[4]:.4} m")
+print(f"A distância de transição é {det1.decolagem_obstaculo()[3]:.5} m")
+print(f"A distância de subida ao obstáculo é {det1.decolagem_obstaculo()[4]:.5} m")
 print(f"A distância total de decolagem é {det1.decolagem_obstaculo()[5]:.5} m")
 print(f"A altura de transição é {det1.decolagem_obstaculo()[6]:.4} m")
 print(f"O ângulo necessário para subida ao obstáculo é {det1.decolagem_obstaculo()[7]:.4}°")

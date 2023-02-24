@@ -127,12 +127,15 @@ class desempenho:
         Stotal = Sg + Srot + Str # Distância total percorrida até o alinhamento da aeronave com o ângulo de subida
         htr = r*(1-m.cos(theta_climb)) # Altura de transição (hTR)
         roc_lof = curvas.razao_subida(self, desempenho.vel_transition(self))
-        if Stotal < 55 and htr < hob:
-            Sc = (hob-htr)/m.tan(theta_climb) # Distância do ponto em que terminou a transição "Str" até o ponto que alcança o obstáculo
-            ac_Sc = (desempenho.vel_climb(self)**2-desempenho.vel_transition(self)**2)/(2*Sc) # Aceleração média durante a subida ao obstáculo
-            tSc = (desempenho.vel_climb(self)-desempenho.vel_transition(self))/ac_Sc # Tempo de subida do fim da transição até alcançar obstáculo
-            Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
-            tTotal += tSc
+        if Stotal < 55:
+            if htr < hob:
+                Sc = (hob-htr)/m.tan(theta_climb) # Distância do ponto em que terminou a transição "Str" até o ponto que alcança o obstáculo
+                ac_Sc = (desempenho.vel_climb(self)**2-desempenho.vel_transition(self)**2)/(2*Sc) # Aceleração média durante a subida ao obstáculo
+                tSc = (desempenho.vel_climb(self)-desempenho.vel_transition(self))/ac_Sc # Tempo de subida do fim da transição até alcançar obstáculo
+                Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
+                tTotal += tSc
+            else:
+                Sc = 55 - Stotal
         return ac_SG, Sg, Srot, Str, Sc, Stotal, htr, m.degrees(theta_climb), tTotal, roc_lof
 
     def subida(self, V):
@@ -200,6 +203,7 @@ class desempenho:
             'S_rotation':[],
             'S_transition':[],
             'S_climb':[],
+            'S_total':[],
         }
         while rho <= 3:
             mtow = 7.0 # Mtow inicial
@@ -237,12 +241,13 @@ class desempenho:
                         Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
                         #print(m.degrees(theta_climb), m.degrees(ang_real))
                         if theta_climb < ang_real: # Avalia se o ângulo necessário para ultrapassar o obstáculo "θ_climb" é menor que o fornecido pela razão de subida
-                            carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc])
+                            carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc, Stotal])
                     else:
-                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc])
+                        Sc = 55 - Stotal
+                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc, Stotal])
                 elif Stotal >= 55:
                     if htr >= hob: # Avalia se a aeronave vai ter uma altura maior que o obstáculo quando estiver no fim da transição (STR)
-                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc])
+                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc, Stotal])
                 mtow += 0.1
                 #print(mtow) # Usado para testar se não estaria preso em loop infinito (Não descomentar!)
             if rho == 1.165: rho = 2
@@ -258,9 +263,9 @@ class desempenho:
         data['S_rotation'] = [i[7] for i in carga]
         data['S_transition'] = [i[8] for i in carga]
         data['S_climb'] = [i[9] for i in carga]
+        data['S_total'] = [i[10] for i in carga]
         dataFrame = pd.DataFrame(data = data)
         print(dataFrame)
-        # Coloque o lugar que gostaria de salvar os dados abaixo! Após o  " 'r "  e antes de  " \dados "
         dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
         mtowF = [i[1]/self.g for i in carga if i[2] == 1.165] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])
