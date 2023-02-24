@@ -97,9 +97,6 @@ class curvas:
                     return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
             else:
                 if self.rho == 1.165:
-                    '''print(f'F: {p_15x10}')
-                    print(f'SP: {pS_15x10}')
-                    print(f'SJC: {pI_15x10}')'''
                     return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
                 elif self.rho == 1.081:
                     return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
@@ -134,17 +131,29 @@ class curvas:
 
     def tracao_requerida(self, V, *rho):
         if rho:
-            Rho = rho[0][0] # Guarda o valor (float) de rho em uma variável fora da tupla ((rho),)
-            Cl = (2*self.W)/(Rho*V**2*self.Sw)
-            Cd = self.Cdmin + self.K*Cl**2
+            if len(rho) == 2:
+                Rho, W = rho[0], rho[1]
+                Cl = (2*W)/(Rho*V**2*self.Sw)
+                Cd = self.Cdmin + self.K*Cl**2
+                return W/(Cl/Cd)
+            elif len(rho) == 1:
+                Rho = rho[0]
+                Cl = (2*self.W)/(Rho*V**2*self.Sw)
+                Cd = self.Cdmin + self.K*Cl**2
+                return self.W/(Cl/Cd)
         else:
             Cl = (2*self.W)/(self.rho*V**2*self.Sw)
             Cd = self.Cdmin + self.K*Cl**2
-        return self.W/(Cl/Cd)
+            return self.W/(Cl/Cd)
 
     def potencia_requerida(self, V, *rho):
         if rho:
-            return curvas.tracao_requerida(self, V, rho)*V
+            if len(rho) == 2:
+                Rho, W = rho[0], rho[1]
+                return curvas.tracao_requerida(self, V, Rho, W)*V
+            elif len(rho) == 1:
+                Rho = rho[0]
+                return curvas.tracao_requerida(self, V, Rho)*V
         else:
             return curvas.tracao_requerida(self, V)*V
 
@@ -155,8 +164,12 @@ class curvas:
         else:
             return curvas.tracao(self, V)*V
     
-    def razao_subida(self, V):
-        RoC = (curvas.potencia(self, V)-curvas.potencia_requerida(self, V))/self.W
+    def razao_subida(self, V, *rho):
+        if rho:
+            Rho, W = rho[0], rho[1]
+            RoC = (curvas.potencia(self, V, Rho)-curvas.potencia_requerida(self, V, Rho, W))/W
+        else:
+            RoC = (curvas.potencia(self, V)-curvas.potencia_requerida(self, V))/self.W
         if RoC < 0: return 0
         else: return RoC
         
