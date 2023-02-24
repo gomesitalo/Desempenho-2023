@@ -2,6 +2,7 @@
 
 from curvas import curvas
 import math as m
+import pandas as pd
 import sympy as sp
 import matplotlib.pyplot as plt
 
@@ -20,7 +21,7 @@ class desempenho:
         self.rho = desempenho.altitude_densidade(self)
         self.prop = prop
         #self.Mtow = 19.7 # Mtow máximo definido pelo MDO
-        self.Mtow = desempenho.mtow(self) # Mtow máximo calculado
+        self.Mtow = desempenho.mtow_obstaculo(self) # Mtow máximo calculado
         self.W = self.Mtow*self.g
         #self.tr = curvas.curva_TR(self) # Equação polinomial obtida de Tr
         pass
@@ -32,7 +33,7 @@ class desempenho:
             S.J.C.    =   950 hPa, 22°C (295.15 K), 0.998 kg/m³, 911.870 m
         '''
         P0, T0 = 1013.25, 288.15 # pressão e temperatura de referência ao nível do mar (Regulamento de 2023 / Apêndice 4)
-        # ------------------- #
+        
         if self.p == 1.225:
             rho_local = self.p # densidade-padrão à nivel do mar para 0m
             P_local, T_local = 1014, 303.15 # pressão e temperatura máx médias em hPa e Kelvin (Fortaleza)
@@ -46,15 +47,26 @@ class desempenho:
         rho =  round((rho_local*(1-(0.000022558*hp))**4.2561),3) # Densidade do ar (kg/m³) (Gudmundsson - Capítulo 16 / Eq. 19)
         return rho # Retorna a densidade do ar corrigida pela altitude-densidade
     
+    def efeito_solo(self):
+        return ((16*self.hw/self.bw)**2)/((1+(16*self.hw/self.bw)**2)) # Efeito solo durante a decolagem e o pouso (McCormick)
+    
     def vel_estol(self): # Velocidade na qual a aeronave entra em 'stall'
         return m.sqrt((2*(self.W))/(self.rho*self.Sw*self.Clmax))
-        
-    def vel_liftoff(self): # Velocidade estimada para decolagem "Vlof" (ANDERSON, 2015)
-        return 1.2*desempenho.vel_estol(self)
+    
+    # Vrot, Vlof, Vtr e Vclimb(ou V2) são estabelecidas pela norma: 14 CFR Part 23, § 23.51 Takeoff Speeds #
 
+    def vel_liftoff(self): # Velocidade estimada para o início da rotação da aeronave, Vr ou Vlof (Gudmundsson, 2014)
+        return 1.1*desempenho.vel_estol(self)
+    
     def vel_liftoff_070(self): # Velocidade ideal estimada para a subida "Vlof/raiz(2)"
-        return (desempenho.vel_liftoff(self))/m.sqrt(2)
-
+        return desempenho.vel_liftoff(self)/m.sqrt(2)
+    
+    def vel_transition(self): # Velocidade para a aeronave atingir o ângulo de subida (θclimb), "Vtr" (Gudmundsson, 2014)
+        return 1.15*desempenho.vel_estol(self)
+    
+    def vel_climb(self): # Velocidade estimada no momento inicial de subida do obstáculo "V2" (Gudmundsson, 2014)
+        return 1.2*desempenho.vel_estol(self)
+    
     def vel_aprroch(self): # Velocidade com que a aeronave se aproxima da pista de pouso (FAR Part-23)
         return 1.3*desempenho.vel_estol(self)
 
@@ -64,16 +76,15 @@ class desempenho:
     def vel_max_alcance(self): # Velocidade de máximo alcance, tração mínima requerida ou de máxima eficiência aerodinâmica
         return ((2*(self.W)/(self.rho*self.Sw))**0.5)*(((self.K)/self.Cdmin)**0.25)
 
-    def vel_max_autonomia(self): # Velocidade de máxima autonomia ou de potência requerida mínima 
+    def vel_max_autonomia(self): # Velocidade de máxima autonomia ou de potência requerida mínima
         return ((2*(self.W)/(self.rho*self.Sw))**0.5)*(((self.K)/(3*self.Cdmin))**0.25)
 
     def Cl_ideal(self):
-        efeito_solo = ((16*self.hw/self.bw)**2)/((1+(16*self.hw/self.bw)**2)) # Efeito solo durante a decolagem e o pouso
-        return self.mu/(2*efeito_solo*self.K)
+        # Cl0 + Cl_alfa*alfa_tof
+        return self.mu/(2*desempenho.efeito_solo(self)*self.K)
 
     def Cd_ideal(self):
-        efeito_solo = ((16*self.hw/self.bw)**2)/((1+(16*self.hw/self.bw)**2)) # Efeito solo durante a decolagem e o pouso
-        return self.Cdmin + efeito_solo*self.K*(desempenho.Cl_ideal(self)**2)
+        return self.Cdmin + desempenho.efeito_solo(self)*self.K*(desempenho.Cl_ideal(self)**2) # CDi(IGE) = phi*self.K*Cllof**2
 
     def ponto_projeto(self):
         Cl_asterix = m.sqrt(self.Cdmin/self.K) # Coef. de sustentação que maximiza a eficiência aerodinâmica - ou o alcance, (Cl*)
@@ -81,15 +92,48 @@ class desempenho:
         #Cd_asterix = self.Cdmin + self.K*Cl_asterix**2 # Coef. de arrasto para o ponto de projeto [Equivale ao "(2*self.Cdmin)"]
         E_max = Cl_asterix/(2*self.Cdmin) # Eficiência aerodinâmica máxima também escrito como (L/D)max
         return E_max
+    
+    def decolagem_obstaculo(self): # Corrida de decolagem com obstáculo
+        # CDi = Cl**2/(m.pi*AR*e), Cl = 2*L/(rho*v**2*self.Sw), Cl_alfa = Cl/(alfa - alfa_azl), alfa_i = Cl**2/(m.pi*AR)
+        hob, Sc = 0.70 + 0.15, 0 # Altura do obstáculo + margem de segurança, Distância ao obstáculo
+        
+        # Determinação da corrida em solo (SG) #
+        T_Vlof = curvas.tracao(self, desempenho.vel_liftoff_070(self)) # Tração na velocidade de "Vlof/sqrt(2)"
+        D_Vlof = 0.5*self.rho*((desempenho.vel_liftoff_070(self))**2)*self.Sw*desempenho.Cd_ideal(self) # Arrasto na velocidade de "Vlof/sqrt(2)"
+        L_Vlof = 0.5*self.rho*((desempenho.vel_liftoff_070(self))**2)*self.Sw*desempenho.Cl_ideal(self) # Lift na velocidade de "Vlof/sqrt(2)"
+        ac_SG = (self.g/self.W)*(T_Vlof-D_Vlof-self.mu*((self.W)-L_Vlof)) # Aceleração média durante a corrida no solo (ac_média_SG)
+        Sg = (desempenho.vel_liftoff(self)**2)/(2*ac_SG) # Distância de Ground Roll (SG)
+        tSG = m.sqrt(2*Sg/ac_SG) # Tempo de corrida no solo (tSG)
+         
+        # Determinação do segmento de rotação (SROT) #
+        Srot = desempenho.vel_liftoff(self) # A distância de rotação (SROT) é de aproximadamente o módulo da velocidade de rotação (VROT)
+        tROT = 1 # O tempo da rotação é de aproximadamente 1s
+         
+        # Determinação do momento de transição (STR) #
+        r = desempenho.vel_transition(self)**2/(self.g*0.1903) # Raio de subida (R) durante a transição [17-30] (Gudmundsson, 2014)
+        T_tr = curvas.tracao(self, desempenho.vel_transition(self)) # Tração no durante a transição
+        Cl_tr = 2*self.W/(self.rho*desempenho.vel_transition(self)**2*self.Sw)
+        Cd_tr = self.Cdmin + desempenho.efeito_solo(self)*self.K*(Cl_tr)**2 # Coef. de arrasto durante a transição
+        D_tr = 0.5*self.rho*((desempenho.vel_transition(self))**2)*self.Sw*Cd_tr # Arrasto durante a transição
+        #L_tr = 0.5*self.rho*((desempenho.vel_transition(self))**2)*self.Sw*Cl_tr # Lift durante a transição
+        sin_climb = m.sin((T_tr-D_tr)/(self.W)) # Seno do ângulo de subida "θ_climb"
+        theta_climb = m.asin(sin_climb) # Ângulo de subida "θ_climb" em radianos
+        Str = r*sin_climb # Distância de transição (STR)
+        ac_STR = (desempenho.vel_transition(self)**2-desempenho.vel_liftoff(self)**2)/(2*Str) # Aceleração média durante a transição
+        tTR = (desempenho.vel_transition(self)-desempenho.vel_liftoff(self))/ac_STR # Tempo que leva o momento de transição
 
-    def decolagem(self):
-        T_Vlof_r2 = curvas.tracao(self, desempenho.vel_liftoff_070(self)) # Tração estimada na velocidade da norma aeronáutica
-        D_Vlof_r2 = 0.5*self.rho*((desempenho.vel_liftoff_070(self))**2)*self.Sw*desempenho.Cd_ideal(self)
-        L_Vlof_r2 = 0.5*self.rho*((desempenho.vel_liftoff_070(self))**2)*self.Sw*desempenho.Cl_ideal(self)
-        ac_media = (1/self.Mtow)*(T_Vlof_r2-D_Vlof_r2-self.mu*((self.W)-L_Vlof_r2))
-        Sg = (1.44*(self.W)**2)/(self.g*self.rho*self.Sw*self.Clmax*(T_Vlof_r2-D_Vlof_r2-self.mu*((self.W)-L_Vlof_r2)))
-        t_Sg = m.sqrt(2*Sg/ac_media)
-        return ac_media, Sg, t_Sg
+        # Avaliação da superação do obstáculo #
+        tTotal = tSG + tROT + tTR # Tempo total até o fim do segmento de transição
+        Stotal = Sg + Srot + Str # Distância total percorrida até o alinhamento da aeronave com o ângulo de subida
+        htr = r*(1-m.cos(theta_climb)) # Altura de transição (hTR)
+        roc_lof = curvas.razao_subida(self, desempenho.vel_transition(self))
+        if Stotal < 55 and htr < hob:
+            Sc = (hob-htr)/m.tan(theta_climb) # Distância do ponto em que terminou a transição "Str" até o ponto que alcança o obstáculo
+            ac_Sc = (desempenho.vel_climb(self)**2-desempenho.vel_transition(self)**2)/(2*Sc) # Aceleração média durante a subida ao obstáculo
+            tSc = (desempenho.vel_climb(self)-desempenho.vel_transition(self))/ac_Sc # Tempo de subida do fim da transição até alcançar obstáculo
+            Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
+            tTotal += tSc
+        return ac_SG, Sg, Srot, Str, Sc, Stotal, htr, m.degrees(theta_climb), tTotal, roc_lof
 
     def subida(self, V):
         v = 0.01
@@ -141,93 +185,92 @@ class desempenho:
 
     #def envelope_de_voo():
 
-    #def mtow_obstaculo(self):
-        
-
-    def mtow(self): # Mtow máximo para uma decolagem e m 'x' metros
-        rho = 1 # parâmetro de densidade que auxiliará a percorrer a lista
-        Carga_util = [] # lista vazia para receber os valores de Sg, W e rho
+    def mtow_obstaculo(self): # Mtow máximo para uma decolagem em 'x' metros com obstáculo
+        rho = 1
+        hob, Sc = 0.70 + 0.15, 0 # Altura do obstáculo + margem de segurança, Distância ao obstáculo
+        carga = []
+        data = {
+            'Distância_total':[],
+            'Peso':[],
+            'Densidade':[],
+            'Ângulo_subida':[],
+            'Ângulo_real':[],
+            'Altura_transição':[],
+            'S_groll':[],
+            'S_rotation':[],
+            'S_transition':[],
+            'S_climb':[],
+        }
         while rho <= 3:
-            mtow = 10.0 # Mtow inicial
+            mtow = 7.0 # Mtow inicial
             if rho == 1: rho = 1.165 # Troca o valor de rho = 1 para rho = 1.165 kg/m³
             elif rho == 2: rho = 1.081 # Troca o valor de rho = 2 para rho = 1.081 kg/m³
             elif rho == 3: rho = 0.998 # Troca o valor de rho = 3 para rho = 0.998 kg/m³
             while mtow <= 20:
+                Stotal, ang_real = 0, 0 # Distância total de decolagem percorrida, Ângulo de subida real para 'VTR' em radianos
                 W = mtow*self.g
-                T_Vlof_r2 = curvas.tracao(self, (1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2), rho) # Instâncias, 'Vlof/sqrt(2)', *args
-                D_Vlof_r2 = 0.5*rho*(((1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2))**2)*self.Sw*desempenho.Cd_ideal(self)
-                L_Vlof_r2 = 0.5*rho*(((1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2))**2)*self.Sw*desempenho.Cl_ideal(self)
-                Sg = (1.44*W**2)/(self.g*rho*self.Sw*self.Clmax*(T_Vlof_r2-D_Vlof_r2-self.mu*(W-L_Vlof_r2)))
-                #print(f'{T_Vlof_r2} N, {Sg} m, {(1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2)} m/s') # Testa os valores T, Sg e v_lof_r2
-                if Sg <= 100:
-                    Carga_util.append([Sg, W, rho])
-                else:
-                    break
+                # Determinação da corrida em solo (SG) #
+                T_Vlof = curvas.tracao(self, 1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2), rho) # Tração na velocidade de "Vlof/sqrt(2)"
+                D_Vlof = 0.5*rho*((1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2))**2)*self.Sw*desempenho.Cd_ideal(self) # Arrasto na velocidade de "Vlof/sqrt(2)"
+                L_Vlof = 0.5*rho*((1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2))**2)*self.Sw*desempenho.Cl_ideal(self) # Lift na velocidade de "Vlof/sqrt(2)"
+                ac_SG = (self.g/W)*(T_Vlof-D_Vlof-self.mu*((W)-L_Vlof)) # Aceleração média durante a corrida no solo (ac_média_SG)
+                Sg = ((1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2)/(2*ac_SG) # Distância de Ground Roll (SG)
+                # Determinação do segmento de rotação (SROT) #
+                Srot = (1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))) # A distância de rotação (SROT) é de aproximadamente o módulo da velocidade de rotação (VROT)
+                # Determinação do momento de transição (STR) #
+                r = (1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2/(self.g*0.1903) # Raio de subida (R) durante a transição [17-30] (Gudmundsson, 2014)
+                T_tr = curvas.tracao(self, 1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))), rho) # Tração no durante a transição
+                Cl_tr = 2*W/(rho*(1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2*self.Sw)
+                Cd_tr = self.Cdmin + desempenho.efeito_solo(self)*self.K*(Cl_tr)**2 # Coef. de arrasto durante a transição
+                D_tr = 0.5*rho*((1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2)*self.Sw*Cd_tr # Arrasto durante a transição
+                sin_climb = m.sin((T_tr-D_tr)/(W)) # Seno do ângulo de subida "θ_climb"
+                theta_climb = m.asin(sin_climb) # Ângulo de subida "θ_climb" em radianos
+                Str = r*sin_climb # Distância de transição (STR)
+                # Avaliação da superação do obstáculo #
+                Stotal = Sg + Srot + Str # Distância total percorrida até o alinhamento da aeronave com o ângulo de subida
+                htr = r*(1-m.cos(theta_climb)) # Altura de transição (hTR)
+                #print(Stotal, htr)
+                if Stotal < 55:
+                    ang_real = m.asin(curvas.razao_subida(self, (1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))), rho, W)/(1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))) # Calcula o ângulo de subida real para 'VTR' em radianos
+                    if htr < hob:
+                        Sc = (hob-htr)/m.tan(theta_climb) # Distância do ponto em que terminou a transição "Str" até o ponto que alcança o obstáculo
+                        Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
+                        #print(m.degrees(theta_climb), m.degrees(ang_real))
+                        if theta_climb < ang_real: # Avalia se o ângulo necessário para ultrapassar o obstáculo "θ_climb" é menor que o fornecido pela razão de subida
+                            carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc])
+                    else:
+                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc])
+                elif Stotal >= 55:
+                    if htr >= hob: # Avalia se a aeronave vai ter uma altura maior que o obstáculo quando estiver no fim da transição (STR)
+                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc])
                 mtow += 0.1
-                #print("zero") # Usado para testar se não estaria preso em loop infinito (Não descomentar!)
+                #print(mtow) # Usado para testar se não estaria preso em loop infinito (Não descomentar!)
             if rho == 1.165: rho = 2
             elif rho == 1.081: rho = 3
             else: break
-        mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.165 and i[0] <= 50] # Retorna o valor máximo do Mtow em 0m
+        data['Distância_total'] = [i[0] for i in carga]
+        data['Peso'] = [i[1] for i in carga]
+        data['Densidade'] = [i[2] for i in carga]
+        data['Ângulo_subida'] = [i[3] for i in carga]
+        data['Ângulo_real'] = [i[4] for i in carga]
+        data['Altura_transição'] = [i[5] for i in carga]
+        data['S_groll'] = [i[6] for i in carga]
+        data['S_rotation'] = [i[7] for i in carga]
+        data['S_transition'] = [i[8] for i in carga]
+        data['S_climb'] = [i[9] for i in carga]
+        dataFrame = pd.DataFrame(data = data)
+        print(dataFrame)
+        # Coloque o lugar que gostaria de salvar os dados abaixo! Após o  " 'r "  e antes de  " \dados "
+        dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
+        mtowF = [i[1]/self.g for i in carga if i[2] == 1.165] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])
-        mtowS = [i[1]/self.g for i in Carga_util if i[2] == 1.081 and i[0] <= 50] # Retorna o valor máximo do Mtow em 600m
+        mtowS = [i[1]/self.g for i in carga if i[2] == 1.081] # Retorna o valor máximo do Mtow em 600m
         mtowS = float(mtowS[-1])
-        mtowI = [i[1]/self.g for i in Carga_util if i[2] == 0.998 and i[0] <= 50] # Retorna o valor máximo do Mtow em 1200m
+        mtowI = [i[1]/self.g for i in carga if i[2] == 0.998] # Retorna o valor máximo do Mtow em 1200m
         mtowI = float(mtowI[-1])
-        """ x1, x2, x3 = [],[],[] # Valores de distância de decolagem para diferentes pesos na densidade do ar de 0m, 600m e 1200m
-        y1, y2, y3 = [],[],[] # Valores de Pesos (W) diferentes para deolagem na densidade do ar de 0m, 600m e 1200m
-        mtowF, mtowS, mtowI = 10,10,10 # Força as variáveis de mtow (kg) existirem no MDO
-        for i in Carga_util:
-            if i[2] == 1.225:
-                x1.append(i[0]) # Valores de dist. de decolagem com rho = 1.225 kg/m³
-                y1.append(i[1]) # Valores de Peso com rho = 1.225 kg/m³
-                if i[0] <= 58: # Distância (m) que se espera que a aeroanave atinja a velocidade de decolagem em rho = 1.225 kg/m³ 
-                    mtowF = i[1]/self.g # Se o menor elemento de i[0] > "condição acima", então mtowF = 1
-            elif i[2] == 1.156:
-                x2.append(i[0]) # Valores de dist. de decolagem com rho = 1.156 kg/m³
-                y2.append(i[1]) # Valores de Peso com rho = 1.156 kg/m³
-                if i[0] <= 58: # Distância (m) que se espera que a aeroanave atinja a velocidade de decolagem em rho = 1.156 kg/m³
-                    mtowS = i[1]/self.g # Se o menor elemento de i[0] > "condição acima", então mtowS = 1
-            elif i[2] == 1.090:
-                x3.append(i[0]) # Valores de dist. de decolagem com rho = 1.090 kg/m³
-                y3.append(i[1]) # Valores de Peso com rho = 1.090 kg/m³
-                if i[0] <= 58: # Distância (m) que se espera que a aeroanave atinja a velocidade de decolagem em rho = 1.090 kg/m³
-                    mtowI = i[1]/self.g # Se o menor elemento de i[0] > "condição acima", então mtowI = 1
-            else:
-                break """
-        #print("fim da iteração") # Exibe o print se a função estiver correta
-        '''plt.plot(x1, y1, ls='solid', lw='1', color='g', label='$S_G$ em Fortaleza')
-        plt.plot(x2, y2, ls='solid', lw='1', color='k', label='$S_G$ em São Paulo')
-        plt.plot(x3, y3, ls='solid', lw='1', color='r', label='$S_G$ em São José dos Campos')
-        plt.title('Influência do peso ($W$) na distância de decolagem ($S_G$)')
-        plt.xlabel('Distância de decolagem ($m$)', fontsize=10)
-        plt.ylabel('Peso ($N$)', fontsize=10)
-        plt.legend()
-        plt.axis("auto")
-        plt.show()'''
         if self.p == 1.225:
             return mtowF
         elif self.p == 1.156:
             return mtowS
         elif self.p == 1.090:
             return mtowI
-        """ mtowF, mtowS, mtowI = 1,1,1
-        mtowF = [i[1]/self.g for i in Carga_util if i[2] == 1.225 and i[0] <= 58] # Cria uma lista de valores para todo mtowF que obedece à condição de Sg
-        try:
-            mtowF = float(mtowF[-1]) # Retorna o valor (float) do mtow encontrado em Fortaleza
-        except:
-            print(mtowF)
-            mtowF = float(mtowF)
-        mtowS = [i[1]/self.g for i in Carga_util if i[2] == 1.156 and i[0] <= 58] # Cria uma lista de valores para todo mtowS que obedece à condição de Sg
-        try:
-            mtowS = float(mtowS[-1]) # Retorna o valor (float) do mtow encontrado em SP
-        except:
-            print(mtowS)
-            mtowS = float(mtowS)
-        mtowI = [i[1]/self.g for i in Carga_util if i[2] == 1.090 and i[0] <= 58] # Cria uma lista de valores para todo mtowI que obedece à condição de Sg
-        try:
-            mtowI = float(mtowI[-1]) # Retorna o valor (float) do mtow encontrado em SJC
-        except:
-            print(mtowI)
-            mtowI = float(mtowI)
-         """
