@@ -1,6 +1,6 @@
 # Função principal da classe desempenho
 
-from teste_desempenho1 import desempenho
+from desempenho import desempenho
 import os
 os.system("cls")
 
