@@ -97,6 +97,9 @@ class curvas:
                     return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
             else:
                 if self.rho == 1.165:
+                    '''print(f' F: {p_15x10}')
+                    print(f' S: {pS_15x10}')
+                    print(f' I: {pI_15x10}')'''
                     return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
                 elif self.rho == 1.081:
                     return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
@@ -170,7 +173,7 @@ class curvas:
             RoC = (curvas.potencia(self, V, Rho)-curvas.potencia_requerida(self, V, Rho, W))/W
         else:
             RoC = (curvas.potencia(self, V)-curvas.potencia_requerida(self, V))/self.W
-        if RoC < 0: return 0
+        if RoC < 0: return float(0)
         else: return RoC
         
     def curva_ROC(self):
@@ -212,7 +215,9 @@ class curvas:
         rho = 0 # parâmetro de densidade que auxiliará a percorrer a lista
         Tr = [] # lista vazia para receber os valores de Tr, v e rho
         while rho < 3:
-            v = 6 # velocidade inicial
+            #v = 9 # velocidade inicial para 0m
+            #v = 8 # velocidade inicial para 600m
+            v = 7 # velocidade inicial para 1200m
             if rho == 0: rho = 1.165
             elif rho == 1: rho = 1.081
             elif rho == 2: rho = 0.998

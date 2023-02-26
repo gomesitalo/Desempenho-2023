@@ -95,7 +95,7 @@ class desempenho:
     
     def decolagem_obstaculo(self): # Corrida de decolagem com obstáculo
         # CDi = Cl**2/(m.pi*AR*e), Cl = 2*L/(rho*v**2*self.Sw), Cl_alfa = Cl/(alfa - alfa_azl), alfa_i = Cl**2/(m.pi*AR)
-        hob, Sc = 0.70 + 0.15, 0 # Altura do obstáculo + margem de segurança, Distância ao obstáculo
+        hob, Sc = 0.70 + 0.15, float(0) # Altura do obstáculo + margem de segurança, Distância ao obstáculo
         
         # Determinação da corrida em solo (SG) #
         T_Vlof = curvas.tracao(self, desempenho.vel_liftoff_070(self)) # Tração na velocidade de "Vlof/sqrt(2)"
@@ -161,10 +161,12 @@ class desempenho:
         vt = [] # Vetor que guardará os valores de V.mín e V.máx, bem como as de Tmin e Tmáx. # vt = [[Vmin, Tmin],[Vmax, Tmax]]
         Vcmin, Vcmax = 0, 0 # De acordo com a JAR-VLA 335, são as velocidades mínima e máxima durante o voo de cruzeiro
         x = sp.symbols('x')
-        tr = 0.1522*x**2 - 8.679*x + 127 # 0m (19,9kg)
-        td = -0.02562*x**2 + 0.03855*x + 47.5    #    0m
-        #td = -0.02377*x**2 + 0.03576*x + 44.08  #  600m
-        #td = -0.02195*x**2 + 0.03304*x + 40.69  # 1200m
+        #tr = 0.07315*x**2 - 4.319*x + 70.77    #    0m (18,5kg)
+        #tr = 0.08017*x**2 - 4.676*x + 73.99    #  600m (17,1kg)
+        tr = 0.09013*x**2 - 5.188*x + 79.06     # 1200m (15,8kg)
+        #td = -0.02562*x**2 + 0.03855*x + 47.5  #    0m
+        #td = -0.02377*x**2 + 0.03576*x + 44.08 #  600m
+        td = -0.02195*x**2 + 0.03304*x + 40.69  # 1200m
         equation = sp.Eq(td, tr) # Acha a equação de 'Td - Tr = 0'
         solutions = sp.solveset(equation) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
         for i in solutions:
@@ -197,7 +199,6 @@ class desempenho:
             'Peso':[],
             'Densidade':[],
             'Ângulo_subida':[],
-            'Ângulo_real':[],
             'Altura_transição':[],
             'S_groll':[],
             'S_rotation':[],
@@ -235,19 +236,19 @@ class desempenho:
                 htr = r*(1-m.cos(theta_climb)) # Altura de transição (hTR)
                 #print(Stotal, htr)
                 if Stotal < 55:
-                    ang_real = m.asin(curvas.razao_subida(self, (1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))), rho, W)/(1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))) # Calcula o ângulo de subida real para 'VTR' em radianos
+                    #ang_real = m.asin(curvas.razao_subida(self, (1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))), rho, W)/(1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))) # Calcula o ângulo de subida real para 'VTR' em radianos
                     if htr < hob:
                         Sc = (hob-htr)/m.tan(theta_climb) # Distância do ponto em que terminou a transição "Str" até o ponto que alcança o obstáculo
                         Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
                         #print(m.degrees(theta_climb), m.degrees(ang_real))
-                        if theta_climb < ang_real: # Avalia se o ângulo necessário para ultrapassar o obstáculo "θ_climb" é menor que o fornecido pela razão de subida
-                            carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc, Stotal])
+                        if Stotal < 55: # Avalia se o ângulo necessário para ultrapassar o obstáculo "θ_climb" é menor que o fornecido pela razão de subida
+                            carga.append([Stotal, W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
                     else:
                         Sc = 55 - Stotal
-                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc, Stotal])
+                        carga.append([Stotal, W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
                 elif Stotal >= 55:
                     if htr >= hob: # Avalia se a aeronave vai ter uma altura maior que o obstáculo quando estiver no fim da transição (STR)
-                        carga.append([Stotal, W, rho, m.degrees(theta_climb), m.degrees(ang_real), htr, Sg, Srot, Str, Sc, Stotal])
+                        carga.append([Stotal, W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
                 mtow += 0.1
                 #print(mtow) # Usado para testar se não estaria preso em loop infinito (Não descomentar!)
             if rho == 1.165: rho = 2
@@ -257,13 +258,12 @@ class desempenho:
         data['Peso'] = [i[1] for i in carga]
         data['Densidade'] = [i[2] for i in carga]
         data['Ângulo_subida'] = [i[3] for i in carga]
-        data['Ângulo_real'] = [i[4] for i in carga]
-        data['Altura_transição'] = [i[5] for i in carga]
-        data['S_groll'] = [i[6] for i in carga]
-        data['S_rotation'] = [i[7] for i in carga]
-        data['S_transition'] = [i[8] for i in carga]
-        data['S_climb'] = [i[9] for i in carga]
-        data['S_total'] = [i[10] for i in carga]
+        data['Altura_transição'] = [i[4] for i in carga]
+        data['S_groll'] = [i[5] for i in carga]
+        data['S_rotation'] = [i[6] for i in carga]
+        data['S_transition'] = [i[7] for i in carga]
+        data['S_climb'] = [i[8] for i in carga]
+        data['S_total'] = [i[9] for i in carga]
         dataFrame = pd.DataFrame(data = data)
         print(dataFrame)
         dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)

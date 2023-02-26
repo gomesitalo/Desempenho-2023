@@ -33,7 +33,7 @@ det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.524, 0.0067, 0.28, 2.29, 1.366
 '''
 
 # Mtow e Estol
-print(f"O mtow máximo encontrado é {det1.mtow_obstaculo():.4} kg\n")
+print(f"O mtow máximo encontrado é {det1.Mtow:.4} kg\n")
 #print(f"A densidade encontrada é {det1.altitude_densidade():.2} kg/m³\n")
 print(f"A velocidade de estol é {det1.vel_estol():.4} m/s\n")
 
@@ -48,7 +48,7 @@ print(f"A distância total de decolagem é {det1.decolagem_obstaculo()[5]:.5} m"
 print(f"A altura de transição é {det1.decolagem_obstaculo()[6]:.4} m")
 print(f"O ângulo necessário para subida ao obstáculo é {det1.decolagem_obstaculo()[7]:.4}°")
 print(f"O tempo total de decolagem é de {det1.decolagem_obstaculo()[8]:.4} s")
-print(f"A razão de subida no momento de transição é {det1.decolagem_obstaculo()[2]:.5} m/s\n")
+print(f"A razão de subida no momento de transição é {det1.decolagem_obstaculo()[9]:.4} m/s\n")
 
 # Subida
 print(f"A razão de subida no momento de decolagem é {det1.subida(det1.vel_liftoff())[3]:.4} m/s")
