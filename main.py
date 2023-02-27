@@ -17,7 +17,7 @@ elif AD == 'I':
 os.system("cls")
 
 # Instâncias (inputs) das funções de desempenho
-det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.524, 0.0067, 0.28, 2.29, 1.366, p, '15x10')
+det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.424, 0.0067, 0.28, 2.29, 1.366, p, '15x10')
 
 '''
 1º. gravidade em m/s² (g)
@@ -46,9 +46,10 @@ print(f"A distância de transição é {det1.decolagem_obstaculo()[3]:.5} m")
 print(f"A distância de subida ao obstáculo é {det1.decolagem_obstaculo()[4]:.5} m")
 print(f"A distância total de decolagem é {det1.decolagem_obstaculo()[5]:.5} m")
 print(f"A altura de transição é {det1.decolagem_obstaculo()[6]:.4} m")
-print(f"O ângulo necessário para subida ao obstáculo é {det1.decolagem_obstaculo()[7]:.4}°")
-print(f"O tempo total de decolagem é de {det1.decolagem_obstaculo()[8]:.4} s")
-print(f"A razão de subida no momento de transição é {det1.decolagem_obstaculo()[9]:.4} m/s\n")
+print(f"O raio de curvatura é de  {det1.decolagem_obstaculo()[7]:.5}")
+print(f"O ângulo necessário para subida ao obstáculo é {det1.decolagem_obstaculo()[8]:.4}°")
+print(f"O tempo total de decolagem é de {det1.decolagem_obstaculo()[9]:.4} s")
+print(f"A razão de subida no momento de transição é {det1.decolagem_obstaculo()[10]:.4} m/s\n")
 
 # Subida
 print(f"A razão de subida no momento de decolagem é {det1.subida(det1.vel_liftoff())[3]:.4} m/s")
@@ -56,7 +57,7 @@ print(f"O ângulo de subida para a velocidade de decolagem é {det1.subida(det1.
 print(f"A máxima razão de subida é {det1.subida(det1.vel_liftoff())[0]:.4} m/s")
 print(f"O ângulo de subida para a máxima razão de subida é {det1.subida(det1.vel_liftoff())[2]:.4}°")
 print(f"A velocidade durante a máxima razão de subida é {det1.subida(det1.vel_liftoff())[1]:.5} m/s\n")
-det1.gráfico()
+#det1.gráfico()
 
 # Cruzeiro
 print(f"A velocidade de máximo alcance é {det1.vel_max_alcance():.5} m/s")
@@ -69,8 +70,8 @@ print(f'A velocidade máxima durante o voo de cruzeiro é {det1.cruzeiro()[3]:.5
 # Pouso
 print(f"A distância de pouso (FAR-23) é de {det1.pouso()[0]:.6} m")
 print(f"A distância de pouso real é de {det1.pouso()[1]:.6} m")
-print(f"O ângulo de planeio ideal para pouso é {det1.pouso()[2]:.4}°")
-print(f"A velocidade de planeio para o ângulo ideal é {det1.pouso()[3]:.5} m/s\n")
+print(f"O ângulo de planeio mínimo para pouso é {det1.pouso()[2]:.4}°")
+print(f"A velocidade para o ângulo de planeio mínimo (máx distânca) é {det1.pouso()[3]:.5} m/s\n")
 
 # Teto de voo
 

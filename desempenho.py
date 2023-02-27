@@ -136,7 +136,7 @@ class desempenho:
                 tTotal += tSc
             else:
                 Sc = 55 - Stotal
-        return ac_SG, Sg, Srot, Str, Sc, Stotal, htr, m.degrees(theta_climb), tTotal, roc_lof
+        return ac_SG, Sg, Srot, Str, Sc, Stotal, htr, r, m.degrees(theta_climb), tTotal, roc_lof
 
     def subida(self, V):
         v = 0.01
@@ -184,8 +184,8 @@ class desempenho:
         D_Vstall = 0.5*self.rho*((desempenho.vel_estol(self)/m.sqrt(2))**2)*self.Sw*desempenho.Cd_ideal(self)
         L_Vstall = 0.5*self.rho*((desempenho.vel_estol(self)/m.sqrt(2))**2)*self.Sw*desempenho.Cl_ideal(self)
         Sland_real = ((self.W)**2)/(self.g*self.rho*self.Sw*self.Clmax*(D_Vstall+self.mu*((self.W)-L_Vstall)))
-        ang_planeio = m.atan(1/desempenho.ponto_projeto(self))*(180/m.pi) # Calcula o ângulo de planeio para (L/D)max em graus
-        vel_planeio = m.sqrt((2*self.W*m.cos(ang_planeio*m.pi/180))/(self.rho*self.Sw*desempenho.Cl_ideal(self)))
+        ang_planeio = m.atan(1/desempenho.ponto_projeto(self))*(180/m.pi) # Calcula o ângulo de planeio para (L/D)max em graus - que provê a máxima distância de planeio
+        vel_planeio = m.sqrt((2*self.W*m.cos(ang_planeio*m.pi/180))/(self.rho*self.Sw*desempenho.Cl_ideal(self))) # Distância máxima de planeio
         return Sland_FAR, Sland_real, ang_planeio, vel_planeio
 
     #def envelope_de_voo():
