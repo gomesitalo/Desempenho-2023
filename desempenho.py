@@ -139,7 +139,8 @@ class desempenho:
         return ac_SG, Sg, Srot, Str, Sc, Stotal, htr, r, m.degrees(theta_climb), tTotal, roc_lof
 
     def subida(self, V):
-        v = 0.01
+        h = 30 # Altura definida como distância segura para aplicação de profundor e retorno à altitude desejada "h"
+        v = 0.01 # Velocidade inicial para o loop 'while'
         rate_climb = [] # Cria uma lista que irá conter a razão de subida em cada velocidade de V = 0 até V = 40 m/s
         while v <= 40:
             rate_climb.append(curvas.razao_subida(self, v)) # Guarda os valores de R/C em rate_climb
@@ -151,19 +152,25 @@ class desempenho:
         max_ang_subida = m.asin(max_rate_c/vel_h)*(180/m.pi) # Calcula o ângulo de subida para o R/C_max em graus
         rate_c = curvas.razao_subida(self, V) # Calcula a razão de subida  para um dado 'V' em m/s
         ang_subida = m.asin(curvas.razao_subida(self, V)/V)*(180/m.pi) # Calcula o ângulo de subida para um dado 'V' em graus
-        return max_rate_c, vel_h, max_ang_subida, rate_c, ang_subida
+        ts = h/max_rate_c # Tempo de subida com base na máxima razão de subida
+        tsmáx = h/curvas.razao_subida(self, desempenho.vel_climb(self)) # Tempo máximo de subida com velocidade de subida 'V2' constante
+        return max_rate_c, vel_h, max_ang_subida, rate_c, ang_subida, ts, tsmáx
     
+    def tmax(self):
+        return curvas.tracao(self, 0.01)
+
     def gráfico(self):
         curvas.curva_ROC(self) # plota o gráfico da razão de subida # R/C
         curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr em função da velocidade # Td(v) x Tr(v)
 
     def cruzeiro(self):
+        Scr = 750 # Distância de cruzeiro em SJC
         vt = [] # Vetor que guardará os valores de V.mín e V.máx, bem como as de Tmin e Tmáx. # vt = [[Vmin, Tmin],[Vmax, Tmax]]
         Vcmin, Vcmax = 0, 0 # De acordo com a JAR-VLA 335, são as velocidades mínima e máxima durante o voo de cruzeiro
         x = sp.symbols('x')
         #tr = 0.07315*x**2 - 4.319*x + 70.77    #    0m (18,5kg)
         #tr = 0.08017*x**2 - 4.676*x + 73.99    #  600m (17,1kg)
-        tr = 0.09013*x**2 - 5.188*x + 79.06     # 1200m (15,8kg)
+        tr = 0.08797*x**2 - 5.058*x + 77.07     # 1200m (15,8kg)
         #td = -0.02562*x**2 + 0.03855*x + 47.5  #    0m
         #td = -0.02377*x**2 + 0.03576*x + 44.08 #  600m
         td = -0.02195*x**2 + 0.03304*x + 40.69  # 1200m
@@ -171,11 +178,13 @@ class desempenho:
         solutions = sp.solveset(equation) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
         for i in solutions:
             vt.append([i,td.subs(x,i)]) # Guarda os valores de V[i], Td[i] em 'vt'
-        Vmin, Tmin = vt[0][0], vt[0][1]
-        Vmax, Tmax = vt[1][0], vt[1][1]
-        Vcmin = 2.4*m.sqrt(self.W/self.Sw)
-        Vcmax = 0.9*Vmax
-        return Vmin, Vmax, Vcmin, Vcmax
+        Vmin, Tmin = vt[0][0], vt[0][1] # Velocidade mínima 'Vmín' da aeronave pelo gráfico de tração
+        Vmax, Tmax = vt[1][0], vt[1][1] # Velocidade máxima 'Vmáx' da aeronave pelo gráfico de tração
+        Vcmin = 2.4*m.sqrt(self.W/self.Sw) # Mínima velocidade permitida pela norma JAR-VLA 335 para o cruzeiro
+        Vcmax = 0.9*Vmax # Máxima velocidade permitida pela norma JAR-VLA 335 para o cruzeiro
+        tcr_safe = Scr/Vcmin # Tempo máximo de voo em voo reto e nivelado (margem de segurança para Vcmin)
+        tcr = Scr/Vcmax # Tempo de cruzeiro
+        return Vmin, Vmax, Vcmin, Vcmax, tcr, tcr_safe
 
     def pouso(self):
         D_Vland = 0.5*self.rho*((desempenho.vel_landing(self))**2)*self.Sw*desempenho.Cd_ideal(self)
@@ -266,7 +275,7 @@ class desempenho:
         data['S_total'] = [i[9] for i in carga]
         dataFrame = pd.DataFrame(data = data)
         print(dataFrame)
-        dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
+        #dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
         mtowF = [i[1]/self.g for i in carga if i[2] == 1.165] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])
         mtowS = [i[1]/self.g for i in carga if i[2] == 1.081] # Retorna o valor máximo do Mtow em 600m

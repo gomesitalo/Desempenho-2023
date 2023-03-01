@@ -35,7 +35,11 @@ det1 = desempenho(9.80665, 0.09, 0.09666355488, 2.424, 0.0067, 0.28, 2.29, 1.366
 # Mtow e Estol
 print(f"O mtow máximo encontrado é {det1.Mtow:.4} kg\n")
 #print(f"A densidade encontrada é {det1.altitude_densidade():.2} kg/m³\n")
-print(f"A velocidade de estol é {det1.vel_estol():.4} m/s\n")
+print(f"A velocidade de estol é {det1.vel_estol():.4} m/s")
+print(f"A velocidade de rotação é {det1.vel_liftoff():.5} m/s")
+print(f"A velocidade de transição é {det1.vel_transition():.5} m/s")
+print(f"A velocidade de subida é {det1.vel_climb():.5} m/s")
+print(f"A tração máxima é {det1.tmax():.5} N\n")
 
 # Decolagem
 print(f"A velocidade de decolagem é {det1.vel_liftoff():.5} m/s")
@@ -56,7 +60,9 @@ print(f"A razão de subida no momento de decolagem é {det1.subida(det1.vel_lift
 print(f"O ângulo de subida para a velocidade de decolagem é {det1.subida(det1.vel_liftoff())[4]:.4}°")
 print(f"A máxima razão de subida é {det1.subida(det1.vel_liftoff())[0]:.4} m/s")
 print(f"O ângulo de subida para a máxima razão de subida é {det1.subida(det1.vel_liftoff())[2]:.4}°")
-print(f"A velocidade durante a máxima razão de subida é {det1.subida(det1.vel_liftoff())[1]:.5} m/s\n")
+print(f"A velocidade durante a máxima razão de subida é {det1.subida(det1.vel_liftoff())[1]:.5} m/s")
+print(f"O tempo de subida para a máxima razão de subida é {det1.subida(det1.vel_liftoff())[5]:.4} s")
+print(f"O tempo de subida para a velocidade mínima de subida é {det1.subida(det1.vel_liftoff())[6]:.5} s\n")
 #det1.gráfico()
 
 # Cruzeiro
@@ -65,7 +71,9 @@ print(f"A velocidade de máxima eficiência aerodinâmica é {det1.vel_max_auton
 print(f'A velocidade mínima da aeronave é {det1.cruzeiro()[0]:.5} m/s')
 print(f'A velocidade máxima da aeronave é {det1.cruzeiro()[1]:.5} m/s')
 print(f'A velocidade mínima durante o voo de cruzeiro é {det1.cruzeiro()[2]:.5} m/s')
-print(f'A velocidade máxima durante o voo de cruzeiro é {det1.cruzeiro()[3]:.5} m/s\n')
+print(f'A velocidade máxima durante o voo de cruzeiro é {det1.cruzeiro()[3]:.5} m/s')
+print(f"O tempo de cruzeiro normal é {det1.cruzeiro()[4]:.5} s")
+print(f"O tempo de cruzeiro com segurança é {det1.cruzeiro()[5]:.5} s\n")
 
 # Pouso
 print(f"A distância de pouso (FAR-23) é de {det1.pouso()[0]:.6} m")
