@@ -23,7 +23,6 @@ class desempenho:
         #self.Mtow = 19.7 # Mtow máximo definido pelo MDO
         self.Mtow = desempenho.mtow_obstaculo(self) # Mtow máximo calculado
         self.W = self.Mtow*self.g
-        #self.tr = curvas.curva_TR(self) # Equação polinomial obtida de Tr
         pass
 
     def altitude_densidade(self):
@@ -164,7 +163,7 @@ class desempenho:
         curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr em função da velocidade # Td(v) x Tr(v)
 
     def cruzeiro(self):
-        Scr = 750 # Distância de cruzeiro em SJC
+        Scr = 300 # Distância de cruzeiro em SJC
         vt = [] # Vetor que guardará os valores de V.mín e V.máx, bem como as de Tmin e Tmáx. # vt = [[Vmin, Tmin],[Vmax, Tmax]]
         Vcmin, Vcmax = 0, 0 # De acordo com a JAR-VLA 335, são as velocidades mínima e máxima durante o voo de cruzeiro
         x = sp.symbols('x')
@@ -182,9 +181,10 @@ class desempenho:
         Vmax, Tmax = vt[1][0], vt[1][1] # Velocidade máxima 'Vmáx' da aeronave pelo gráfico de tração
         Vcmin = 2.4*m.sqrt(self.W/self.Sw) # Mínima velocidade permitida pela norma JAR-VLA 335 para o cruzeiro
         Vcmax = 0.9*Vmax # Máxima velocidade permitida pela norma JAR-VLA 335 para o cruzeiro
-        tcr_safe = Scr/Vcmin # Tempo máximo de voo em voo reto e nivelado (margem de segurança para Vcmin)
-        tcr = Scr/Vcmax # Tempo de cruzeiro
-        return Vmin, Vmax, Vcmin, Vcmax, tcr, tcr_safe
+        #tcr_safe = Scr/Vcmin # Tempo máximo de voo em voo reto e nivelado (margem de segurança para Vcmin)
+        tcr_max_alcance = Scr/desempenho.vel_max_alcance(self) # Tempo de cruzeiro para máximo alcance
+        tcr_max_autonomia = Scr/desempenho.vel_max_autonomia(self) # Tempo de cruzeiro para máxima autonomia
+        return Vmin, Vmax, Vcmin, Vcmax, tcr_max_alcance, tcr_max_autonomia
 
     def pouso(self):
         D_Vland = 0.5*self.rho*((desempenho.vel_landing(self))**2)*self.Sw*desempenho.Cd_ideal(self)
@@ -275,6 +275,7 @@ class desempenho:
         data['S_total'] = [i[9] for i in carga]
         dataFrame = pd.DataFrame(data = data)
         print(dataFrame)
+        # Coloque na linha abaixo o endereço do diretório que você deseja salvar os dados de análise do MTOW
         #dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
         mtowF = [i[1]/self.g for i in carga if i[2] == 1.165] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])

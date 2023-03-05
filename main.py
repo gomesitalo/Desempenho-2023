@@ -67,13 +67,13 @@ print(f"O tempo de subida para a velocidade mínima de subida é {det1.subida(de
 
 # Cruzeiro
 print(f"A velocidade de máximo alcance é {det1.vel_max_alcance():.5} m/s")
-print(f"A velocidade de máxima eficiência aerodinâmica é {det1.vel_max_autonomia():.5} m/s")
+print(f"A velocidade de máxima autonomia é {det1.vel_max_autonomia():.5} m/s")
 print(f'A velocidade mínima da aeronave é {det1.cruzeiro()[0]:.5} m/s')
 print(f'A velocidade máxima da aeronave é {det1.cruzeiro()[1]:.5} m/s')
 print(f'A velocidade mínima durante o voo de cruzeiro é {det1.cruzeiro()[2]:.5} m/s')
 print(f'A velocidade máxima durante o voo de cruzeiro é {det1.cruzeiro()[3]:.5} m/s')
-print(f"O tempo de cruzeiro normal é {det1.cruzeiro()[4]:.5} s")
-print(f"O tempo de cruzeiro com segurança é {det1.cruzeiro()[5]:.5} s\n")
+print(f"O tempo de cruzeiro para máximo alcance é {det1.cruzeiro()[4]:.5} s")
+print(f"O tempo de cruzeiro para máxima autonomia é {det1.cruzeiro()[5]:.5} s\n")
 
 # Pouso
 print(f"A distância de pouso (FAR-23) é de {det1.pouso()[0]:.6} m")
