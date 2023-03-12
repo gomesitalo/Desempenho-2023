@@ -215,7 +215,7 @@ class curvas:
         rho = 0 # parâmetro de densidade que auxiliará a percorrer a lista
         Tr = [] # lista vazia para receber os valores de Tr, v e rho
         while rho < 3:
-            #v = 9 # velocidade inicial para 0m
+            #v = 8.5 # velocidade inicial para 0m
             #v = 8 # velocidade inicial para 600m
             v = 7 # velocidade inicial para 1200m
             if rho == 0: rho = 1.165

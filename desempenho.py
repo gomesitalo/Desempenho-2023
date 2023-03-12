@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class desempenho:
 
-    def __init__(self, g, mu, K, Clmax, Cdmin, hw, bw, Sw, p, prop):
+    def __init__(self, g, mu, K, Clmax, Cdmin, hw, bw, Sw, p, prop, phi_turn, n_max):
         self.g = g
         self.mu = mu
         self.K = K
@@ -20,6 +20,8 @@ class desempenho:
         self.p = p
         self.rho = desempenho.altitude_densidade(self)
         self.prop = prop
+        self.phi_turn = phi_turn
+        self.n_max = n_max
         #self.Mtow = 19.7 # Mtow máximo definido pelo MDO
         self.Mtow = desempenho.mtow_obstaculo(self) # Mtow máximo calculado
         self.W = self.Mtow*self.g
@@ -155,7 +157,7 @@ class desempenho:
         tsmáx = h/curvas.razao_subida(self, desempenho.vel_climb(self)) # Tempo máximo de subida com velocidade de subida 'V2' constante
         return max_rate_c, vel_h, max_ang_subida, rate_c, ang_subida, ts, tsmáx
     
-    def tmax(self):
+    def tracao_max(self):
         return curvas.tracao(self, 0.01)
 
     def gráfico(self):
@@ -163,13 +165,13 @@ class desempenho:
         curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr em função da velocidade # Td(v) x Tr(v)
 
     def cruzeiro(self):
-        Scr = 300 # Distância de cruzeiro em SJC
+        Scr = 600 # Distância de cruzeiro em SJC
         vt = [] # Vetor que guardará os valores de V.mín e V.máx, bem como as de Tmin e Tmáx. # vt = [[Vmin, Tmin],[Vmax, Tmax]]
         Vcmin, Vcmax = 0, 0 # De acordo com a JAR-VLA 335, são as velocidades mínima e máxima durante o voo de cruzeiro
         x = sp.symbols('x')
-        #tr = 0.07315*x**2 - 4.319*x + 70.77    #    0m (18,5kg)
-        #tr = 0.08017*x**2 - 4.676*x + 73.99    #  600m (17,1kg)
-        tr = 0.08797*x**2 - 5.058*x + 77.07     # 1200m (15,8kg)
+        #tr = 0.07255*x**2 - 4.229*x + 68.12    #    0m (17,6kg)
+        #tr = 0.0733*x**2 - 4.249*x + 67.23     #  600m (16,3kg)
+        tr = 0.08168*x**2 - 4.676*x + 71.26     # 1200m (15,0kg)
         #td = -0.02562*x**2 + 0.03855*x + 47.5  #    0m
         #td = -0.02377*x**2 + 0.03576*x + 44.08 #  600m
         td = -0.02195*x**2 + 0.03304*x + 40.69  # 1200m
@@ -185,6 +187,13 @@ class desempenho:
         tcr_max_alcance = Scr/desempenho.vel_max_alcance(self) # Tempo de cruzeiro para máximo alcance
         tcr_max_autonomia = Scr/desempenho.vel_max_autonomia(self) # Tempo de cruzeiro para máxima autonomia
         return Vmin, Vmax, Vcmin, Vcmax, tcr_max_alcance, tcr_max_autonomia
+
+    def manobra(self):
+        a_turn = self.g*m.tan(self.phi_turn*m.pi/180) # Aceleração centrípeta com o 'bank angle' (phi_turn)
+        R_turn = desempenho.vel_max_autonomia(self)**2/(a_turn) # Raio da curva com o 'bank angle' (phi_turn)
+        t_turn = 2*m.pi*R_turn/desempenho.vel_max_autonomia(self) # Tempo de curva com o 'bank angle' (phi_turn)
+        w_turn = self.g*m.tan(self.phi_turn*m.pi/180)/desempenho.vel_max_autonomia(self) # Rate of turn com o 'bank angle' (phi_turn)
+        return a_turn, R_turn, t_turn, w_turn
 
     def pouso(self):
         D_Vland = 0.5*self.rho*((desempenho.vel_landing(self))**2)*self.Sw*desempenho.Cd_ideal(self)
@@ -276,7 +285,7 @@ class desempenho:
         dataFrame = pd.DataFrame(data = data)
         print(dataFrame)
         # Coloque na linha abaixo o endereço do diretório que você deseja salvar os dados de análise do MTOW
-        #dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
+        dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
         mtowF = [i[1]/self.g for i in carga if i[2] == 1.165] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])
         mtowS = [i[1]/self.g for i in carga if i[2] == 1.081] # Retorna o valor máximo do Mtow em 600m
