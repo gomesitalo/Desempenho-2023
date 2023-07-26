@@ -23,7 +23,8 @@ class desempenho:
         self.phi_turn = phi_turn
         self.n_max = n_max
         #self.Mtow = 19.7 # Mtow máximo definido pelo MDO
-        self.Mtow = desempenho.mtow_obstaculo(self) # Mtow máximo calculado
+        self.Mtow = desempenho.mtow_obstaculo(self)[0] # Mtow máximo calculado com obstáculo na pista
+        self.carga = desempenho.mtow_obstaculo(self)[1] # Valores para construção do gráfico de carga útil
         self.W = self.Mtow*self.g
         pass
 
@@ -33,8 +34,11 @@ class desempenho:
             São Paulo =   980 hPA, 25°C (298.15 K), 1.081 kg/m³, 697.336 m
             S.J.C.    =   950 hPa, 22°C (295.15 K), 0.998 kg/m³, 911.870 m
         '''
-        P0, T0 = 1013.25, 288.15 # pressão e temperatura de referência ao nível do mar (Regulamento de 2023 / Apêndice 4)
-        
+        # Valores Históricos da Equipe (2021) para Pressões Locais [0m, 100m, 200m, 300m, 400m, 500m, 600m, 700m, ...]
+        Pl = [1013.84, 1000.5, 987.16, 973.82, 960.48, 947.14, 941.804, 928.464, 915.124, 908.454, 891.112, 877.772, 875.104, 861.764, 848.424, 843.088, 829.748, 816.408, 812.406, 799.066, 785.726, 781.724, 768.384, 755.044, 752.376, 739.036, 725.696, 712.356, 699.016, 685.676, 672.336, 658.996, 645.656, 632.316, 618.976, 605.636, 592.296, 578.956, 565.616, 552.276, 538.936, 525.596]
+        P0, T0 = 1013.25, 288.15 # Pressão e Temperatura Padrão - referência ao nível do mar (Regulamento de 2023 / Apêndice 4)
+        a = -0.0065 # Lapse rate [K/m]
+        k = a/T0 # Lapse rate constant [/m]
         if self.p == 1.225:
             rho_local = self.p # densidade-padrão à nivel do mar para 0m
             P_local, T_local = 1014, 303.15 # pressão e temperatura máx médias em hPa e Kelvin (Fortaleza)
@@ -43,9 +47,10 @@ class desempenho:
             P_local, T_local = 980, 298.15 # pressão e temperatura máx médias em hPa e Kelvin (São Paulo)
         elif self.p == 1.090:
             rho_local = self.p # densidade-padrão à nivel do mar para 1200m
-            P_local, T_local = 950, 295.15 # pressão e temperatura máx médias em hPa e Kelvin (São José dos Campos)
+            P_local, T_local = 950, 295.15 # pressão e temperatura máx 'obtidas por estação metereológica' em hPa e Kelvin (São José dos Campos)
         hp = (T0/0.0065)*(1-((P_local/P0)/(T_local/T0))**0.234959) # Altitude-Densidade (Regulamento de 2023 / Apêndice 4)
-        rho =  round((rho_local*(1-(0.000022558*hp))**4.2561),3) # Densidade do ar (kg/m³) (Gudmundsson - Capítulo 16 / Eq. 19)
+        rho =  round((rho_local*(1+(k*hp))**4.2561),3) # Densidade do ar (kg/m³) corrigida [até 11km] (Gudmundsson - Capítulo 16 / Eq. 19)
+        #print(rho)
         return rho # Retorna a densidade do ar corrigida pela altitude-densidade
     
     def efeito_solo(self):
@@ -79,6 +84,9 @@ class desempenho:
 
     def vel_max_autonomia(self): # Velocidade de máxima autonomia ou de potência requerida mínima
         return ((2*(self.W)/(self.rho*self.Sw))**0.5)*(((self.K)/(3*self.Cdmin))**0.25)
+    
+    def vel_manobra(self): # Velocidade que impõe o limite máximo estrutural da aeronave
+        return desempenho.vel_estol(self)*m.sqrt(self.n_max)
 
     def Cl_ideal(self):
         # Cl0 + Cl_alfa*alfa_tof
@@ -91,8 +99,8 @@ class desempenho:
         Cl_asterix = m.sqrt(self.Cdmin/self.K) # Coef. de sustentação que maximiza a eficiência aerodinâmica - ou o alcance, (Cl*)
         #Cl_asterix =  m.sqrt((3*self.Cdmin)/self.K) # Coef. de sustentação que permite planeio com máxima autonomia (Cl*)
         #Cd_asterix = self.Cdmin + self.K*Cl_asterix**2 # Coef. de arrasto para o ponto de projeto [Equivale ao "(2*self.Cdmin)"]
-        E_max = Cl_asterix/(2*self.Cdmin) # Eficiência aerodinâmica máxima também escrito como (L/D)max
-        return E_max
+        E_max = Cl_asterix/(2*self.Cdmin) # Eficiência aerodinâmica máxima, também escrito como (L/D)max
+        return E_max, Cl_asterix
     
     def decolagem_obstaculo(self): # Corrida de decolagem com obstáculo
         # CDi = Cl**2/(m.pi*AR*e), Cl = 2*L/(rho*v**2*self.Sw), Cl_alfa = Cl/(alfa - alfa_azl), alfa_i = Cl**2/(m.pi*AR)
@@ -140,18 +148,18 @@ class desempenho:
         return ac_SG, Sg, Srot, Str, Sc, Stotal, htr, r, m.degrees(theta_climb), tTotal, roc_lof
 
     def subida(self, V):
-        h = 30 # Altura definida como distância segura para aplicação de profundor e retorno à altitude desejada "h"
+        h = 10 # Altura (m) definida como distância segura para aplicação de profundor e retorno à altitude desejada "h"
         v = 0.01 # Velocidade inicial para o loop 'while'
         rate_climb = [] # Cria uma lista que irá conter a razão de subida em cada velocidade de V = 0 até V = 40 m/s
         while v <= 40:
             rate_climb.append(curvas.razao_subida(self, v)) # Guarda os valores de R/C em rate_climb
             v += 0.01 # Diferencial que funciona como contador
         max_rate_c = max(rate_climb) # Pega a maior razão de subida (R/C_max) em m/s
-        vel_h = (rate_climb.index(max_rate_c)+1)*0.01 # Pega a velocidade durante R/C_max - Pegamos index + 1, pois o index_inical = 0
+        vel_h = (rate_climb.index(max_rate_c)+1)*0.01 # Pega a velocidade durante R/C_max -> Pegamos 'index' + 1, pois o index_inical = 0
         #print(rate_climb)
         #print(vel_h, max_rate_c, m.pi) # Testa os valores
         max_ang_subida = m.asin(max_rate_c/vel_h)*(180/m.pi) # Calcula o ângulo de subida para o R/C_max em graus
-        rate_c = curvas.razao_subida(self, V) # Calcula a razão de subida  para um dado 'V' em m/s
+        rate_c = curvas.razao_subida(self, V) # Calcula a razão de subida para um dado 'V' em m/s
         ang_subida = m.asin(curvas.razao_subida(self, V)/V)*(180/m.pi) # Calcula o ângulo de subida para um dado 'V' em graus
         ts = h/max_rate_c # Tempo de subida com base na máxima razão de subida
         tsmáx = h/curvas.razao_subida(self, desempenho.vel_climb(self)) # Tempo máximo de subida com velocidade de subida 'V2' constante
@@ -161,8 +169,13 @@ class desempenho:
         return curvas.tracao(self, 0.01)
 
     def gráfico(self):
-        curvas.curva_ROC(self) # plota o gráfico da razão de subida # R/C
-        curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr em função da velocidade # Td(v) x Tr(v)
+        #curvas.curva_ROC(self) # plota o gráfico da razão de subida # R/C
+        #curvas.curva_TRxTD(self) # plota o gráfico de Td x Tr (em função da velocidade) # Td(v) x Tr(v)
+        #curvas.curva_TDxV(self) # plota o gráfico de Td (em função da velocidade) x V # Td(v) x V
+        curvas.curva_TD(self, '15x10') # plota o gráfico de Td em função da velocidade # Td(v) x V
+        #curvas.curva_PRxPD(self) # plota o gráfico de Pd x Pr (em função da velocidade) # Pd(v) x Pr(v)
+        #curvas.curva_decolagem(self) # plota o gráfico de Mtow x S_total para diferentes densidade-altitudes
+        curvas.curva_ROD(self) # plota o gráfico da razão de descida # Sink Rate
 
     def cruzeiro(self):
         Scr = 600 # Distância de cruzeiro em SJC
@@ -171,10 +184,10 @@ class desempenho:
         x = sp.symbols('x')
         #tr = 0.07255*x**2 - 4.229*x + 68.12    #    0m (17,6kg)
         #tr = 0.0733*x**2 - 4.249*x + 67.23     #  600m (16,3kg)
-        tr = 0.08168*x**2 - 4.676*x + 71.26     # 1200m (15,0kg)
+        tr = 1.063*x**2 - 53.45*x + 593.3     # 1200m (15,0kg)
         #td = -0.02562*x**2 + 0.03855*x + 47.5  #    0m
         #td = -0.02377*x**2 + 0.03576*x + 44.08 #  600m
-        td = -0.02195*x**2 + 0.03304*x + 40.69  # 1200m
+        td = -0.02562*x**2 + 0.03855*x + 47.5  # 1200m
         equation = sp.Eq(td, tr) # Acha a equação de 'Td - Tr = 0'
         solutions = sp.solveset(equation) # sp.solveset() = devolve os valores de 'x' nas raízes da equação
         for i in solutions:
@@ -194,6 +207,26 @@ class desempenho:
         t_turn = 2*m.pi*R_turn/desempenho.vel_max_autonomia(self) # Tempo de curva com o 'bank angle' (phi_turn)
         w_turn = self.g*m.tan(self.phi_turn*m.pi/180)/desempenho.vel_max_autonomia(self) # Rate of turn com o 'bank angle' (phi_turn)
         return a_turn, R_turn, t_turn, w_turn
+    
+    def descida(self):
+        h = 10 # Altura (m) definida como distância para aplicação de profundor e retorno ao solo
+        rate_descent = [] # Matriz de valores de razão de descida para uma dada altitude-densidade
+        v = 0.01 # Velocidade inicial
+        while v <= 40:
+            Cl = (2*self.W)/(self.rho*v**2*self.Sw) # Coef. de sus. durante a descida em um dado 'V'
+            Cd = self.Cdmin + self.K*Cl**2  # Coef. de arr. durante a descida em um dado 'V'
+            rate_descent.append(-Cd*m.sqrt((2*self.W)/(Cl**3*self.rho*self.Sw))) # Razão de descida na velocidade 'V'
+            v += 0.01 # Incremento de velocidade
+        min_rate_d = max(rate_descent) # Menor razão de descida na matriz 'rate_descent'
+        min_vel_airspeed = (rate_descent.index(min_rate_d)+1)*0.01 # Velocidade do ar durante a menor razão de descida
+        min_ang_descida = m.asin(min_rate_d/min_vel_airspeed)*(180/m.pi) # Ângulo que fornece a menor razão de descida
+        tdes = -(h/min_rate_d) # Tempo de descida com base na mínima razão de descida
+        ##
+        R_glide = h*desempenho.ponto_projeto(self)[0] # Distância de planeio para máxima eficiência aerodinâmica (L/D)max em metros
+        ang_min_planeio = m.atan(1/desempenho.ponto_projeto(self)[0])*(180/m.pi) # Ângulo de descida para (L/D)max em graus, que prevê a máxima distância de planeio
+        vel_planeio_LDmax = m.sqrt((2*self.W*m.cos(ang_min_planeio*m.pi/180))/(self.rho*self.Sw*desempenho.ponto_projeto(self)[1])) # Velocidade de descida para (L/D)max (m/s)
+        rate_d = curvas.razao_descida(self, vel_planeio_LDmax) # Calcula a razão de descida para a velocidade de máxima eficiência aerodinâmica em m/s
+        return ang_min_planeio, vel_planeio_LDmax, R_glide, rate_d, min_rate_d, min_vel_airspeed, min_ang_descida, tdes
 
     def pouso(self):
         D_Vland = 0.5*self.rho*((desempenho.vel_landing(self))**2)*self.Sw*desempenho.Cd_ideal(self)
@@ -202,9 +235,9 @@ class desempenho:
         D_Vstall = 0.5*self.rho*((desempenho.vel_estol(self)/m.sqrt(2))**2)*self.Sw*desempenho.Cd_ideal(self)
         L_Vstall = 0.5*self.rho*((desempenho.vel_estol(self)/m.sqrt(2))**2)*self.Sw*desempenho.Cl_ideal(self)
         Sland_real = ((self.W)**2)/(self.g*self.rho*self.Sw*self.Clmax*(D_Vstall+self.mu*((self.W)-L_Vstall)))
-        ang_planeio = m.atan(1/desempenho.ponto_projeto(self))*(180/m.pi) # Calcula o ângulo de planeio para (L/D)max em graus - que provê a máxima distância de planeio
-        vel_planeio = m.sqrt((2*self.W*m.cos(ang_planeio*m.pi/180))/(self.rho*self.Sw*desempenho.Cl_ideal(self))) # Distância máxima de planeio
-        return Sland_FAR, Sland_real, ang_planeio, vel_planeio
+        #ang_planeio = m.atan(1/desempenho.ponto_projeto(self))*(180/m.pi) # Calcula o ângulo de planeio para (L/D)max em graus - que provê a máxima distância de planeio
+        #vel_planeio = m.sqrt((2*self.W*m.cos(ang_planeio*m.pi/180))/(self.rho*self.Sw*desempenho.ponto_projeto(self)[1])) # Distância máxima de planeio
+        return Sland_FAR, Sland_real#, ang_planeio, vel_planeio
 
     #def envelope_de_voo():
 
@@ -213,7 +246,6 @@ class desempenho:
         hob, Sc = 0.70 + 0.15, 0 # Altura do obstáculo + margem de segurança, Distância ao obstáculo
         carga = []
         data = {
-            'Distância_total':[],
             'Peso':[],
             'Densidade':[],
             'Ângulo_subida':[],
@@ -230,10 +262,10 @@ class desempenho:
             elif rho == 2: rho = 1.081 # Troca o valor de rho = 2 para rho = 1.081 kg/m³
             elif rho == 3: rho = 0.998 # Troca o valor de rho = 3 para rho = 0.998 kg/m³
             while mtow <= 20:
-                Stotal, ang_real = 0, 0 # Distância total de decolagem percorrida, Ângulo de subida real para 'VTR' em radianos
+                Stotal = 0 # Distância total de decolagem percorrida
                 W = mtow*self.g
                 # Determinação da corrida em solo (SG) #
-                T_Vlof = curvas.tracao(self, 1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2), rho) # Tração na velocidade de "Vlof/sqrt(2)"
+                T_Vlof = curvas.tracao(self, 1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2), rho=rho) # Tração na velocidade de "Vlof/sqrt(2)"
                 D_Vlof = 0.5*rho*((1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2))**2)*self.Sw*desempenho.Cd_ideal(self) # Arrasto na velocidade de "Vlof/sqrt(2)"
                 L_Vlof = 0.5*rho*((1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))/m.sqrt(2))**2)*self.Sw*desempenho.Cl_ideal(self) # Lift na velocidade de "Vlof/sqrt(2)"
                 ac_SG = (self.g/W)*(T_Vlof-D_Vlof-self.mu*((W)-L_Vlof)) # Aceleração média durante a corrida no solo (ac_média_SG)
@@ -242,7 +274,7 @@ class desempenho:
                 Srot = (1.1*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax)))) # A distância de rotação (SROT) é de aproximadamente o módulo da velocidade de rotação (VROT)
                 # Determinação do momento de transição (STR) #
                 r = (1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2/(self.g*0.1903) # Raio de subida (R) durante a transição [17-30] (Gudmundsson, 2014)
-                T_tr = curvas.tracao(self, 1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))), rho) # Tração no durante a transição
+                T_tr = curvas.tracao(self, 1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))), rho=rho) # Tração no durante a transição
                 Cl_tr = 2*W/(rho*(1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2*self.Sw)
                 Cd_tr = self.Cdmin + desempenho.efeito_solo(self)*self.K*(Cl_tr)**2 # Coef. de arrasto durante a transição
                 D_tr = 0.5*rho*((1.15*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))**2)*self.Sw*Cd_tr # Arrasto durante a transição
@@ -260,41 +292,40 @@ class desempenho:
                         Stotal += Sc # Aumenta a distância total na distância percorrida, desde o fim de "Str" até alcançar o obstáculo
                         #print(m.degrees(theta_climb), m.degrees(ang_real))
                         if Stotal < 55: # Avalia se o ângulo necessário para ultrapassar o obstáculo "θ_climb" é menor que o fornecido pela razão de subida
-                            carga.append([Stotal, W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
+                            carga.append([W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
                     else:
                         Sc = 55 - Stotal
-                        carga.append([Stotal, W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
+                        carga.append([W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
                 elif Stotal >= 55:
                     if htr >= hob: # Avalia se a aeronave vai ter uma altura maior que o obstáculo quando estiver no fim da transição (STR)
-                        carga.append([Stotal, W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
+                        carga.append([W, rho, m.degrees(theta_climb), htr, Sg, Srot, Str, Sc, Stotal])
                 mtow += 0.1
                 #print(mtow) # Usado para testar se não estaria preso em loop infinito (Não descomentar!)
             if rho == 1.165: rho = 2
             elif rho == 1.081: rho = 3
             else: break
-        data['Distância_total'] = [i[0] for i in carga]
-        data['Peso'] = [i[1] for i in carga]
-        data['Densidade'] = [i[2] for i in carga]
-        data['Ângulo_subida'] = [i[3] for i in carga]
-        data['Altura_transição'] = [i[4] for i in carga]
-        data['S_groll'] = [i[5] for i in carga]
-        data['S_rotation'] = [i[6] for i in carga]
-        data['S_transition'] = [i[7] for i in carga]
-        data['S_climb'] = [i[8] for i in carga]
-        data['S_total'] = [i[9] for i in carga]
+        data['Peso'] = [i[0] for i in carga]
+        data['Densidade'] = [i[1] for i in carga]
+        data['Ângulo_subida'] = [i[2] for i in carga]
+        data['Altura_transição'] = [i[3] for i in carga]
+        data['S_groll'] = [i[4] for i in carga]
+        data['S_rotation'] = [i[5] for i in carga]
+        data['S_transition'] = [i[6] for i in carga]
+        data['S_climb'] = [i[7] for i in carga]
+        data['S_total'] = [i[8] for i in carga]
         dataFrame = pd.DataFrame(data = data)
         print(dataFrame)
         # Coloque na linha abaixo o endereço do diretório que você deseja salvar os dados de análise do MTOW
         dataFrame.to_excel(r'C:\Users\italo\OneDrive\Desktop\Códigos Python, MATLAB, Arduino e VHDL\Códigos Python\Projetos de Desempenho\resultados\dados'+'.xlsx', index=False)
-        mtowF = [i[1]/self.g for i in carga if i[2] == 1.165] # Retorna o valor máximo do Mtow em 0m
+        mtowF = [i[0]/self.g for i in carga if i[1] == 1.165] # Retorna o valor máximo do Mtow em 0m
         mtowF = float(mtowF[-1])
-        mtowS = [i[1]/self.g for i in carga if i[2] == 1.081] # Retorna o valor máximo do Mtow em 600m
+        mtowS = [i[0]/self.g for i in carga if i[1] == 1.081] # Retorna o valor máximo do Mtow em 600m
         mtowS = float(mtowS[-1])
-        mtowI = [i[1]/self.g for i in carga if i[2] == 0.998] # Retorna o valor máximo do Mtow em 1200m
+        mtowI = [i[0]/self.g for i in carga if i[1] == 0.998] # Retorna o valor máximo do Mtow em 1200m
         mtowI = float(mtowI[-1])
         if self.p == 1.225:
-            return mtowF
+            return mtowF, carga
         elif self.p == 1.156:
-            return mtowS
+            return mtowS, carga
         elif self.p == 1.090:
-            return mtowI
+            return mtowI, carga

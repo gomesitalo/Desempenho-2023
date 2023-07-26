@@ -1,6 +1,8 @@
-# Classe das Curvas de tração, potência e R/C do código de integração de Desempenho - 2023
+# Classe das curvas de gráficos do código de integração de Desempenho - 2023
+# pylint: disable=E1101
 
 import numpy as np
+import math as m
 import matplotlib.pyplot as plt
 
 x_14x7 = np.array([0.00,1.16,2.28,3.44,4.56,5.72,6.88,8.00,9.16,10.28,11.44,12.61,13.72,14.89,16.05,17.17,18.33,19.45,20.61,21.77,22.89,24.05,25.17,26.33,27.49,28.61,29.77,30.89,32.05,33.21])
@@ -22,161 +24,258 @@ yI_16x8 = np.array([49.404,48.939,48.307,47.522,46.619,45.632,44.553,43.376,42.1
 
 class curvas:
 
-    def tracao(self, V, *rho):
+    def tracao(self, V, **kwargs):
         n = 2  # Número de grau do polinômio
 
-        if self.prop == '14x7':
+        if 'prop' in kwargs:
+            if kwargs['prop'] == '14x7':
+                z_14x7 = np.polyfit(x_14x7,y_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_14x7 = np.polyfit(x_14x7,yS_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_14x7 = np.polyfit(x_14x7,yI_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
 
-            z_14x7 = np.polyfit(x_14x7,y_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
-            zS_14x7 = np.polyfit(x_14x7,yS_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
-            zI_14x7 = np.polyfit(x_14x7,yI_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
+                p_14x7 = np.poly1d(z_14x7) # Função ajustada para rho = 1.225kg/m³
+                pS_14x7 = np.poly1d(zS_14x7) # Função ajustada para rho = 1.156kg/m³
+                pI_14x7 = np.poly1d(zI_14x7) # Função ajustada para rho = 1.090kg/m³
 
-            p_14x7 = np.poly1d(z_14x7) # Função ajustada para rho = 1.225kg/m³
-            pS_14x7 = np.poly1d(zS_14x7) # Função ajustada para rho = 1.156kg/m³
-            pI_14x7 = np.poly1d(zI_14x7) # Função ajustada para rho = 1.090kg/m³
-            
-            if rho:
-                Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.165:
-                    return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.081:
-                    return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 0.998:
-                    return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
-            else:
-                if self.rho == 1.165:
-                    return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
-                elif self.rho == 1.081:
-                    return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
-                elif self.rho == 0.998:
-                    return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
+                    
+            elif kwargs['prop'] == '15x7':
+                z_15x7 = np.polyfit(x_15x7,y_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_15x7 = np.polyfit(x_15x7,yS_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_15x7 = np.polyfit(x_15x7,yI_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
 
-        if self.prop == '15x7':
+                p_15x7 = np.poly1d(z_15x7) # Função ajustada para rho = 1.225kg/m³
+                pS_15x7 = np.poly1d(zS_15x7) # Função ajustada para rho = 1.156kg/m³
+                pI_15x7 = np.poly1d(zI_15x7) # Função ajustada para rho = 1.090kg/m³
 
-            z_15x7 = np.polyfit(x_15x7,y_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
-            zS_15x7 = np.polyfit(x_15x7,yS_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
-            zI_15x7 = np.polyfit(x_15x7,yI_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
+                if 'rho' in kwargs:
+                    if kwargs['prop'] == 1.165:
+                        return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['prop'] == 1.081:
+                        return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['prop'] == 0.998:
+                        return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
 
-            p_15x7 = np.poly1d(z_15x7) # Função ajustada para rho = 1.225kg/m³
-            pS_15x7 = np.poly1d(zS_15x7) # Função ajustada para rho = 1.156kg/m³
-            pI_15x7 = np.poly1d(zI_15x7) # Função ajustada para rho = 1.090kg/m³
+            elif kwargs['prop'] == '15x10':
+                z_15x10 = np.polyfit(x_15x10,y_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_15x10 = np.polyfit(x_15x10,yS_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_15x10 = np.polyfit(x_15x10,yI_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
 
-            if rho:
-                Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.165:
-                    return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.081:
-                    return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 0.998:
-                    return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
-            else:
-                if self.rho == 1.165:
-                    return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
-                elif self.rho == 1.081:
-                    return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
-                elif self.rho == 0.998:
-                    return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
+                p_15x10 = np.poly1d(z_15x10) # Função ajustada para rho = 1.225kg/m³
+                pS_15x10 = np.poly1d(zS_15x10) # Função ajustada para rho = 1.156kg/m³
+                pI_15x10 = np.poly1d(zI_15x10) # Função ajustada para rho = 1.090kg/m³
 
-        if self.prop == '15x10':
-            
-            z_15x10 = np.polyfit(x_15x10,y_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
-            zS_15x10 = np.polyfit(x_15x10,yS_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
-            zI_15x10 = np.polyfit(x_15x10,yI_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                    
+            elif kwargs['prop'] == '16x8':
+                z_16x8 = np.polyfit(x_16x8,y_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_16x8 = np.polyfit(x_16x8,yS_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_16x8 = np.polyfit(x_16x8,yI_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
 
-            p_15x10 = np.poly1d(z_15x10) # Função ajustada para rho = 1.225kg/m³
-            pS_15x10 = np.poly1d(zS_15x10) # Função ajustada para rho = 1.156kg/m³
-            pI_15x10 = np.poly1d(zI_15x10) # Função ajustada para rho = 1.090kg/m³
+                p_16x8 = np.poly1d(z_16x8) # Função ajustada para rho = 1.225kg/m³
+                pS_16x8 = np.poly1d(zS_16x8) # Função ajustada para rho = 1.156kg/m³
+                pI_16x8 = np.poly1d(zI_16x8) # Função ajustada para rho = 1.090kg/m³
 
-            if rho:
-                Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.165:
-                    return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.081:
-                    return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 0.998:
-                    return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
-            else:
-                if self.rho == 1.165:
-                    '''print(f' F: {p_15x10}')
-                    print(f' S: {pS_15x10}')
-                    print(f' I: {pI_15x10}')'''
-                    return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif self.rho == 1.081:
-                    return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif self.rho == 0.998:
-                    return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
 
-        if self.prop == '16x8':
+        else:
+            if self.prop == '14x7':
+                z_14x7 = np.polyfit(x_14x7,y_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_14x7 = np.polyfit(x_14x7,yS_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_14x7 = np.polyfit(x_14x7,yI_14x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
 
-            z_16x8 = np.polyfit(x_16x8,y_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
-            zS_16x8 = np.polyfit(x_16x8,yS_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
-            zI_16x8 = np.polyfit(x_16x8,yI_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
+                p_14x7 = np.poly1d(z_14x7) # Função ajustada para rho = 1.225kg/m³
+                pS_14x7 = np.poly1d(zS_14x7) # Função ajustada para rho = 1.156kg/m³
+                pI_14x7 = np.poly1d(zI_14x7) # Função ajustada para rho = 1.090kg/m³
+                
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_14x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
 
-            p_16x8 = np.poly1d(z_16x8) # Função ajustada para rho = 1.225kg/m³
-            pS_16x8 = np.poly1d(zS_16x8) # Função ajustada para rho = 1.156kg/m³
-            pI_16x8 = np.poly1d(zI_16x8) # Função ajustada para rho = 1.090kg/m³
+            if self.prop == '15x7':
+                z_15x7 = np.polyfit(x_15x7,y_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_15x7 = np.polyfit(x_15x7,yS_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_15x7 = np.polyfit(x_15x7,yI_15x7,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
 
-            if rho:
-                Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-                if Rho == 1.165:
-                    return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif Rho == 1.081:
-                    return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif Rho == 0.998:
-                    return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
-            else:
-                if self.rho == 1.165:
-                    return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
-                elif self.rho == 1.081:
-                    return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
-                elif self.rho == 0.998:
-                    return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                p_15x7 = np.poly1d(z_15x7) # Função ajustada para rho = 1.225kg/m³
+                pS_15x7 = np.poly1d(zS_15x7) # Função ajustada para rho = 1.156kg/m³
+                pI_15x7 = np.poly1d(zI_15x7) # Função ajustada para rho = 1.090kg/m³
 
-    def tracao_requerida(self, V, *rho):
-        if rho:
-            if len(rho) == 2:
-                Rho, W = rho[0], rho[1]
-                Cl = (2*W)/(Rho*V**2*self.Sw)
-                Cd = self.Cdmin + self.K*Cl**2
-                return W/(Cl/Cd)
-            elif len(rho) == 1:
-                Rho = rho[0]
-                Cl = (2*self.W)/(Rho*V**2*self.Sw)
-                Cd = self.Cdmin + self.K*Cl**2
-                return self.W/(Cl/Cd)
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_15x7(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para self.rho = 1.090kg/m³
+
+            if self.prop == '15x10':
+                z_15x10 = np.polyfit(x_15x10,y_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_15x10 = np.polyfit(x_15x10,yS_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_15x10 = np.polyfit(x_15x10,yI_15x10,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
+
+                p_15x10 = np.poly1d(z_15x10) # Função ajustada para rho = 1.225kg/m³
+                pS_15x10 = np.poly1d(zS_15x10) # Função ajustada para rho = 1.156kg/m³
+                pI_15x10 = np.poly1d(zI_15x10) # Função ajustada para rho = 1.090kg/m³
+
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_15x10(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+
+            if self.prop == '16x8':
+                z_16x8 = np.polyfit(x_16x8,y_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.225kg/m³
+                zS_16x8 = np.polyfit(x_16x8,yS_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.156kg/m³
+                zI_16x8 = np.polyfit(x_16x8,yI_16x8,n) # Encontra os coeficientes da equação de grau 'n' para rho = 1.090kg/m³
+
+                p_16x8 = np.poly1d(z_16x8) # Função ajustada para rho = 1.225kg/m³
+                pS_16x8 = np.poly1d(zS_16x8) # Função ajustada para rho = 1.156kg/m³
+                pI_16x8 = np.poly1d(zI_16x8) # Função ajustada para rho = 1.090kg/m³
+
+                if 'rho' in kwargs:
+                    if kwargs['rho'] == 1.165:
+                        return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif kwargs['rho'] == 1.081:
+                        return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif kwargs['rho'] == 0.998:
+                        return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+                else:
+                    if self.rho == 1.165:
+                        return p_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.225kg/m³
+                    elif self.rho == 1.081:
+                        return pS_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.156kg/m³
+                    elif self.rho == 0.998:
+                        return pI_16x8(V) # Retorna a Tração disponível para a velocidade 'V' passada como parâmetro, para rho = 1.090kg/m³
+
+    def tracao_requerida(self, V, **kwargs):
+        if 'rho' and 'W' in kwargs:
+            Cl = (2*kwargs['W'])/(kwargs['rho']*V**2*self.Sw)
+            Cd = self.Cdmin + self.K*Cl**2
+            return kwargs['W']/(Cl/Cd)
+        elif 'rho' in kwargs:
+            Cl = (2*self.W)/(kwargs['rho']*V**2*self.Sw)
+            Cd = self.Cdmin + self.K*Cl**2
+            return self.W/(Cl/Cd)
         else:
             Cl = (2*self.W)/(self.rho*V**2*self.Sw)
             Cd = self.Cdmin + self.K*Cl**2
             return self.W/(Cl/Cd)
 
-    def potencia_requerida(self, V, *rho):
-        if rho:
-            if len(rho) == 2:
-                Rho, W = rho[0], rho[1]
-                return curvas.tracao_requerida(self, V, Rho, W)*V
-            elif len(rho) == 1:
-                Rho = rho[0]
-                return curvas.tracao_requerida(self, V, Rho)*V
+    def potencia_requerida(self, V, **kwargs):
+        if 'rho' and 'W' in kwargs:
+            return curvas.tracao_requerida(self, V, rho=kwargs['rho'], W=kwargs['W'])*V
+        elif 'rho' in kwargs:
+            return curvas.tracao_requerida(self, V, rho=kwargs['rho'])*V
         else:
             return curvas.tracao_requerida(self, V)*V
 
-    def potencia(self, V, *rho):
-        if rho:
-            Rho = rho[0] # Guarda o valor (float) de rho em uma variável fora da tupla (rho,)
-            return curvas.tracao(self, V, Rho)*V
+    def potencia(self, V, **kwargs):
+        if 'rho' in kwargs:
+            return curvas.tracao(self, V, rho=kwargs['rho'])*V
         else:
             return curvas.tracao(self, V)*V
-    
-    def razao_subida(self, V, *rho):
-        if rho:
-            Rho, W = rho[0], rho[1]
-            RoC = (curvas.potencia(self, V, Rho)-curvas.potencia_requerida(self, V, Rho, W))/W
+
+    def razao_subida(self, V, **kwargs): # Rate of Climb
+        if 'rho' and 'W' in kwargs:
+            RoC = (curvas.potencia(self, V, rho=kwargs['rho'])-curvas.potencia_requerida(self, V, rho=kwargs['rho'], W=kwargs['W']))/kwargs['W']
+        elif 'rho' in kwargs:
+            RoC = (curvas.potencia(self, V, rho=kwargs['rho'])-curvas.potencia_requerida(self, V, rho=kwargs['rho']))/self.W
         else:
             RoC = (curvas.potencia(self, V)-curvas.potencia_requerida(self, V))/self.W
         if RoC < 0: return float(0)
         else: return RoC
-        
-    def curva_ROC(self):
+
+    def razao_descida(self, V, **kwargs): # Rate of Descent ou Sink Rate
+        if 'rho' and 'W' in kwargs:
+            Cl = (2*kwargs['W'])/(kwargs['rho']*V**2*self.Sw)
+            Cd = self.Cdmin + self.K*Cl**2
+            RoD = (-Cd*m.sqrt((2*kwargs['W'])/(Cl**3*kwargs['rho']*self.Sw)))
+        elif 'rho' in kwargs:
+            Cl = (2*self.W)/(kwargs['rho']*V**2*self.Sw)
+            Cd = self.Cdmin + self.K*Cl**2
+            RoD = (-Cd*m.sqrt((2*self.W)/(Cl**3*kwargs['rho']*self.Sw)))
+        else:
+            Cl = (2*self.W)/(self.rho*V**2*self.Sw)
+            Cd = self.Cdmin + self.K*Cl**2
+            RoD = (-Cd*m.sqrt((2*self.W)/(Cl**3*self.rho*self.Sw)))
+        if RoD > 0: return float(0)
+        else: return RoD
+
+    def curva_ROC(self): # Curvas de razão de subida para diversas altitude-densidades
         matriz_RoC = []
         rho = 0
         while rho < 3:
@@ -185,7 +284,7 @@ class curvas:
             elif rho == 1: rho = 1.081
             elif rho == 2: rho = 0.998
             while v <= 40:
-                RoC = (curvas.potencia(self, v, rho)-curvas.potencia_requerida(self, v, rho))/self.W
+                RoC = (curvas.potencia(self, v, rho=rho)-curvas.potencia_requerida(self, v, rho=rho))/self.W
                 if RoC >= 0: matriz_RoC.append([RoC, v, rho])
                 v += 0.01
             if rho == 1.165: rho = 1
@@ -197,10 +296,10 @@ class curvas:
         yF = [i[0] for i in matriz_RoC if i[2] == 1.165]
         yS = [i[0] for i in matriz_RoC if i[2] == 1.081]
         yI = [i[0] for i in matriz_RoC if i[2] == 0.998]
-        plt.plot(xF, yF, ls='solid', lw='1', color='g', label='RoC em Fortaleza')
-        plt.plot(xS, yS, ls='solid', lw='1', color='b', label='RoC em São Paulo')
-        plt.plot(xI, yI, ls='solid', lw='1', color='r', label='RoC em SJC')
-        plt.title('Razão de Subida em função da velocidade')
+        plt.plot(xF, yF, ls='solid', lw='1', color='g', label='RoC em 0m')
+        plt.plot(xS, yS, ls='solid', lw='1', color='b', label='RoC em 600m')
+        plt.plot(xI, yI, ls='solid', lw='1', color='r', label='RoC em 1200m')
+        plt.title('Razão de subida em função da velocidade')
         plt.xlabel('V ($m/s$)', fontsize=10)
         plt.ylabel('RoC ($m/s$)', fontsize=10)
         #plt.xlim(7, 30)
@@ -209,48 +308,245 @@ class curvas:
         plt.axis('auto')
         plt.show()
         pass
-        
-    def curva_TRxTD(self):
+
+    def curva_ROD(self):
+        matriz_RoD = []
+        aux = 0
+        while aux < 3:
+            v = 1
+            if aux == 0: rho = 1.165
+            elif aux == 1: rho = 1.081
+            elif aux == 2: rho = 0.998
+            while v <= 40:
+                Cl = (2*self.W)/(self.rho*v**2*self.Sw)
+                Cd = self.Cdmin + self.K*Cl**2
+                Vv = -Cd*m.sqrt((2*self.W)/(Cl**3*rho*self.Sw))
+                if v >= 7.85: matriz_RoD.append([Vv, v, rho])
+                v += 0.01
+            aux += 1
+        xF = [i[1] for i in matriz_RoD if i[2] == 1.165]
+        xS = [i[1] for i in matriz_RoD if i[2] == 1.081]
+        xI = [i[1] for i in matriz_RoD if i[2] == 0.998]
+        yF = [i[0] for i in matriz_RoD if i[2] == 1.165]
+        yS = [i[0] for i in matriz_RoD if i[2] == 1.081]
+        yI = [i[0] for i in matriz_RoD if i[2] == 0.998]
+        plt.plot(xF, yF, ls='solid', lw='1', color='g', label='RoD em 0m')
+        plt.plot(xS, yS, ls='solid', lw='1', color='b', label='RoD em 600m')
+        plt.plot(xI, yI, ls='solid', lw='1', color='r', label='RoD em 1200m')
+        plt.title('Razão de descida em função da velocidade')
+        plt.xlabel('V ($m/s$)', fontsize=10)
+        plt.ylabel('RoD ($m/s$)', fontsize=10)
+        plt.legend()
+        plt.axis('auto')
+        plt.show()
+        pass
+
+    def curva_TDxV(self): # Curvas de trações de várias hélices listadas
+        aux = 0 # Variável auxiliar que percorrerá a lista de hélices para o cálculo de tração
+        prop = '-' # Inicializa a variável que receberá o tipo de hélice como uma string
+        Td = [] # Lista que guardará os valores de: tração disponível, velocidade e tipo de hélice
+        while aux <= 3:
+            v = 1 # velocidade inicial
+            if aux == 0: prop = '14x7'
+            elif aux == 1: prop = '15x7'
+            elif aux == 2: prop = '15x10'
+            elif aux == 3: prop = '16x8'
+            while v <= 32: # velocidade final (máxima)
+                if prop == '14x7': Td.append([curvas.tracao(self, v, prop=prop), v, prop])
+                elif prop == '15x7': Td.append([curvas.tracao(self, v, prop=prop), v, prop])
+                elif prop == '15x10': Td.append([curvas.tracao(self, v, prop=prop), v, prop])
+                elif prop == '16x8': Td.append([curvas.tracao(self, v, prop=prop), v, prop])
+                v += 0.01
+            aux += 1
+        x = [i[1] for i in Td if i[2] == '14x7']
+        yt_14x7 = [i[0] for i in Td if i[2] == '14x7'] # Guarda os valores de tração disponível da hélice 14x7E
+        yt_15x7 = [i[0] for i in Td if i[2] == '15x7'] # Guarda os valores de tração disponível da hélice 15x7E
+        yt_15x10 = [i[0] for i in Td if i[2] == '15x10'] # Guarda os valores de tração disponível da hélice 15x10E
+        yt_16x8 = [i[0] for i in Td if i[2] == '16x8'] # Guarda os valores de tração disponível da hélice 16x8E
+        plt.plot(x, yt_14x7, ls='solid', lw='1', color='c', label='$T_{14x7}$   em 1200m')
+        plt.plot(x, yt_15x7, ls='solid', lw='1', color='r', label='$T_{15x7}$   em 1200m')
+        plt.plot(x, yt_15x10, ls='solid', lw='1', color='y', label='$T_{15x10}$ em 1200m')
+        plt.plot(x, yt_16x8, ls='solid', lw='1', color='m', label='$T_{16x8}$   em 1200m')
+        plt.title('Comparação entre as Trações por hélice')
+        plt.xlabel('V ($m/s$)', fontsize=10)
+        plt.ylabel('$T$ ($N$)', fontsize=10)
+        plt.legend()
+        plt.show()
+        pass
+
+    def curva_TD(self, prop): # Curva de tração para uma hélice específica
+        aux = 0
+        Td = []
+        while aux < 3:
+            v = 0.01
+            if aux == 0: rho = 1.165
+            elif aux == 1: rho = 1.081
+            elif aux == 2: rho = 0.998
+            while v <= 40:
+                if prop == '14x7': Td.append([curvas.tracao(self, v, rho=rho, prop=prop), v, rho])
+                elif prop == '15x7': Td.append([curvas.tracao(self, v, rho=rho, prop=prop), v, rho])
+                elif prop == '15x10': Td.append([curvas.tracao(self, v, rho=rho, prop=prop), v, rho])
+                elif prop == '16x8': Td.append([curvas.tracao(self, v, rho=rho, prop=prop), v, rho])
+                v += 0.01
+            aux += 1
+        xF = [i[1] for i in Td if i[2] == 1.165 and i[0] >= 0]
+        xS = [i[1] for i in Td if i[2] == 1.081 and i[0] >= 0]
+        xI = [i[1] for i in Td if i[2] == 0.998 and i[0] >= 0]
+        yF = [i[0] for i in Td if i[2] == 1.165 and i[0] >= 0]
+        yS = [i[0] for i in Td if i[2] == 1.081 and i[0] >= 0]
+        yI = [i[0] for i in Td if i[2] == 0.998 and i[0] >= 0]
+        plt.plot(xF, yF, ls='solid', lw='1', color='g', label='Tração em 0m')
+        plt.plot(xS, yS, ls='solid', lw='1', color='b', label='Tração em 600m')
+        plt.plot(xI, yI, ls='solid', lw='1', color='r', label='Tração em 1200m')
+        plt.title(f'Tração em função da velocidade - {prop}')
+        plt.xlabel('V ($m/s$)', fontsize=10)
+        plt.ylabel('$T_d$ ($N$)', fontsize=10)
+        plt.legend()
+        plt.show()
+        pass
+
+    def curva_TRxTD(self): # Curvas de trações disponível (hélice escolhida) e requerida em diversas altitude-densidades
         n = 2 # Número de grau do polinômio
         rho = 0 # parâmetro de densidade que auxiliará a percorrer a lista
-        Tr = [] # lista vazia para receber os valores de Tr, v e rho
+        Tracao = [] # lista vazia para receber os valores de Td, Tr, v e rho
         while rho < 3:
-            #v = 8.5 # velocidade inicial para 0m
-            #v = 8 # velocidade inicial para 600m
-            v = 7 # velocidade inicial para 1200m
+            v = 1 # velocidade inicial
+            if self.rho == 1.165: vmin = 8.5 # velocidade inicial ajustada para análise em 0m
+            elif self.rho == 1.081: vmin = 8 # velocidade inicial ajustada para análise em 600m
+            elif self.rho == 0.998: vmin = 7 # velocidade inicial ajustada para análise em 1200m
             if rho == 0: rho = 1.165
             elif rho == 1: rho = 1.081
             elif rho == 2: rho = 0.998
             while v < 40:
-                v += 0.01
                 Cl = (2*self.W)/(rho*v**2*self.Sw)
                 Cd = self.Cdmin + self.K*Cl**2
-                Tr.append([self.W/(Cl/Cd), v, rho])
+                Tracao.append([curvas.tracao(self, v, rho=rho), self.W/(Cl/Cd), v, rho])
+                v += 0.01
             if rho == 1.165: rho = 1
             elif rho == 1.081: rho = 2
             else: break
-        x = [i[1] for i in Tr if i[2] == 1.165]
-        yF = [i[0] for i in Tr if i[2] == 1.165]
-        yS = [i[0] for i in Tr if i[2] == 1.081]
-        yI = [i[0] for i in Tr if i[2] == 0.998]
-        plt.plot(x, yF, ls='solid', lw='1', color='c', label='$T_R$ em F')
-        plt.plot(x, yS, ls='solid', lw='1', color='y', label='$T_R$ em SP')
-        plt.plot(x, yI, ls='solid', lw='1', color='m', label='$T_R$ em SJC')
-        plt.plot(x_15x10, y_15x10, ls='solid', lw='1', color='g', label='$T_D$ em F')
-        plt.plot(x_15x10, yS_15x10, ls='solid', lw='1', color='b', label='$T_D$ em SP')
-        plt.plot(x_15x10, yI_15x10, ls='solid', lw='1', color='r', label='$T_D$ em SJC')
-        plt.title('Tração Requerida ($W$) em função de rho ($rho_h$)')
-        plt.xlabel('Velocidade ($m/s$)', fontsize=10)
-        plt.ylabel('$TR_F$ ($N$)', fontsize=10)
+        x = [i[2] for i in Tracao if i[3] == 1.165 and i[2] >= vmin]
+        ydF = [i[0] for i in Tracao if i[3] == 1.165 and i[2] >= vmin]
+        ydS = [i[0] for i in Tracao if i[3] == 1.081 and i[2] >= vmin]
+        ydI = [i[0] for i in Tracao if i[3] == 0.998 and i[2] >= vmin]
+        yrF = [i[1] for i in Tracao if i[3] == 1.165 and i[2] >= vmin]
+        yrS = [i[1] for i in Tracao if i[3] == 1.081 and i[2] >= vmin]
+        yrI = [i[1] for i in Tracao if i[3] == 0.998 and i[2] >= vmin]
+        plt.plot(x, yrF, ls='solid', lw='1', color='c', label='$T_R$ em 0m')
+        plt.plot(x, yrS, ls='solid', lw='1', color='y', label='$T_R$ em 600m')
+        plt.plot(x, yrI, ls='solid', lw='1', color='m', label='$T_R$ em 1200m')
+        plt.plot(x, ydF, ls='solid', lw='1', color='g', label='$T_D$ em 0m')
+        plt.plot(x, ydS, ls='solid', lw='1', color='b', label='$T_D$ em 600m')
+        plt.plot(x, ydI, ls='solid', lw='1', color='r', label='$T_D$ em 1200m')
+        plt.title('Tração em função da velocidade')
+        plt.xlabel('V ($m/s$)', fontsize=10)
+        plt.ylabel('$T$ ($N$)', fontsize=10)
         plt.legend()
         plt.show()
+        x = [i[2] for i in Tracao if i[3] == 1.165]
+        ydF = [i[0] for i in Tracao if i[3] == 1.165]
+        ydS = [i[0] for i in Tracao if i[3] == 1.081]
+        ydI = [i[0] for i in Tracao if i[3] == 0.998]
+        yrF = [i[1] for i in Tracao if i[3] == 1.165]
+        yrS = [i[1] for i in Tracao if i[3] == 1.081]
+        yrI = [i[1] for i in Tracao if i[3] == 0.998]
         if self.rho == 1.165:
-            p = np.poly1d(np.polyfit(x,yF,n))
+            p = np.poly1d(np.polyfit(x,yrF,n)) # Função que expressa a tração requerida na análise acima para 0m
+            q = np.poly1d(np.polyfit(x,ydF,n)) # Função que expressa a tração disponível na análise acima para 0m
             print(p) # mostra o resultado da função TrF(v)
+            print(q) # mostra o resultado da função TdF(v)
         elif self.rho == 1.081:
-            p = np.poly1d(np.polyfit(x,yS,n))
+            p = np.poly1d(np.polyfit(x,yrS,n)) # Função que expressa a tração requerida na análise acima para 600m
+            q = np.poly1d(np.polyfit(x,ydF,n)) # Função que expressa a tração disponível na análise acima para 600m
             print(p) # mostra o resultado da função TrSP(v)
+            print(q) # mostra o resultado da função TdF(v)
         elif self.rho == 0.998:
-            p = np.poly1d(np.polyfit(x,yI,n))
+            p = np.poly1d(np.polyfit(x,yrI,n)) # Função que expressa a tração requerida na análise acima para 1200m
+            q = np.poly1d(np.polyfit(x,ydF,n)) # Função que expressa a tração disponível na análise acima para 1200m
             print(p) # mostra o resultado da função TrSJC(v)
-        return p
+            print(q) # mostra o resultado da função TdF(v)
+        pass
+
+    def curva_PRxPD(self): # Curvas de potências disponível (hélice escolhida) e requerida em diversas altitude-densidades
+        n = 2 # Número de grau do polinômio
+        rho = 0 # parâmetro de densidade que auxiliará a percorrer a lista
+        Potencia = [] # lista vazia para receber os valores de Pd, Pr, v e rho
+        while rho < 3:
+            v = 1 # velocidade inicial
+            if self.rho == 1.165: vmin = 8.5 # velocidade inicial ajustada para análise em 0m
+            elif self.rho == 1.081: vmin = 8 # velocidade inicial ajustada para análise em 600m
+            elif self.rho == 0.998: vmin = 7 # velocidade inicial ajustada para análise em 1200m
+            if rho == 0: rho = 1.165
+            elif rho == 1: rho = 1.081
+            elif rho == 2: rho = 0.998
+            while v < 40:
+                Cl = (2*self.W)/(rho*v**2*self.Sw)
+                Cd = self.Cdmin + self.K*Cl**2
+                Potencia.append([curvas.tracao(self, v, rho=rho)*v, (self.W/(Cl/Cd))*v, v, rho])
+                v += 0.01
+            if rho == 1.165: rho = 1
+            elif rho == 1.081: rho = 2
+            else: break
+        x = [i[2] for i in Potencia if i[3] == 1.165 and i[2] >= vmin]
+        ydF = [i[0] for i in Potencia if i[3] == 1.165 and i[2] >= vmin]
+        ydS = [i[0] for i in Potencia if i[3] == 1.081 and i[2] >= vmin]
+        ydI = [i[0] for i in Potencia if i[3] == 0.998 and i[2] >= vmin]
+        yrF = [i[1] for i in Potencia if i[3] == 1.165 and i[2] >= vmin]
+        yrS = [i[1] for i in Potencia if i[3] == 1.081 and i[2] >= vmin]
+        yrI = [i[1] for i in Potencia if i[3] == 0.998 and i[2] >= vmin]
+        plt.plot(x, yrF, ls='solid', lw='1', color='c', label='$P_R$ em 0m')
+        plt.plot(x, yrS, ls='solid', lw='1', color='y', label='$P_R$ em 600m')
+        plt.plot(x, yrI, ls='solid', lw='1', color='m', label='$P_R$ em 1200m')
+        plt.plot(x, ydF, ls='solid', lw='1', color='g', label='$P_D$ em 0m')
+        plt.plot(x, ydS, ls='solid', lw='1', color='b', label='$P_D$ em 600m')
+        plt.plot(x, ydI, ls='solid', lw='1', color='r', label='$P_D$ em 1200m')
+        plt.title('Potência em função da velocidade - 15x10E')
+        plt.xlabel('V ($m/s$)', fontsize=10)
+        plt.ylabel('$P$ ($W$)', fontsize=10)
+        plt.legend()
+        plt.show()
+        x = [i[2] for i in Potencia if i[3] == 1.165]
+        ydF = [i[0] for i in Potencia if i[3] == 1.165]
+        ydS = [i[0] for i in Potencia if i[3] == 1.081]
+        ydI = [i[0] for i in Potencia if i[3] == 0.998]
+        yrF = [i[1] for i in Potencia if i[3] == 1.165]
+        yrS = [i[1] for i in Potencia if i[3] == 1.081]
+        yrI = [i[1] for i in Potencia if i[3] == 0.998]
+        if self.rho == 1.165:
+            p = np.poly1d(np.polyfit(x,yrF,n)) # Função que expressa a potência requerida na análise acima para 0m
+            q = np.poly1d(np.polyfit(x,ydF,n)) # Função que expressa a potência disponível na análise acima para 0m
+            print(p) # mostra o resultado da função PrF(v)
+            print(q) # mostra o resultado da função PdF(v)
+        elif self.rho == 1.081:
+            p = np.poly1d(np.polyfit(x,yrS,n)) # Função que expressa a potência requerida na análise acima para 600m
+            q = np.poly1d(np.polyfit(x,ydF,n)) # Função que expressa a potência disponível na análise acima para 600m
+            print(p) # mostra o resultado da função PrSP(v)
+            print(q) # mostra o resultado da função PdF(v)
+        elif self.rho == 0.998:
+            p = np.poly1d(np.polyfit(x,yrI,n)) # Função que expressa a potência requerida na análise acima para 1200m
+            q = np.poly1d(np.polyfit(x,ydF,n)) # Função que expressa a potência disponível na análise acima para 1200m
+            print(p) # mostra o resultado da função PrSJC(v)
+            print(q) # mostra o resultado da função PdF(v)
+        pass
+
+    def curva_decolagem(self): # Carga máxima (kg) por comprimento de pista (m) com obstáculo
+        y = [self.Mtow for i in self.carga if i[1] == 1.165] # Define os valores de y para o mtow máximo
+        xF = [i[8] for i in self.carga if i[1] == 1.165]
+        xS = [i[8] for i in self.carga if i[1] == 1.081]
+        xI = [i[8] for i in self.carga if i[1] == 0.998]
+        yF = [i[0]/self.g for i in self.carga if i[1] == 1.165]
+        yS = [i[0]/self.g for i in self.carga if i[1] == 1.081]
+        yI = [i[0]/self.g for i in self.carga if i[1] == 0.998]
+        plt.plot(xF, y, ls='solid', lw='1', color='k') # Traça uma linha horizontal na carga máxima suportada
+        plt.text(35.7, self.Mtow + 0.1, f'Mtow: {round(self.Mtow, 0)}kg', color='black')
+        plt.plot(xF, yF, ls='solid', lw='1', color='g', label='Mtow em 0m')
+        plt.plot(xS, yS, ls='solid', lw='1', color='b', label='Mtow em 600m')
+        plt.plot(xI, yI, ls='solid', lw='1', color='r', label='Mtow em 1200m')
+        plt.title('Comprimento de pista em função do MTOW')
+        plt.xlabel('Distância de decolagem ($m$)')
+        plt.ylabel('Mtow (kg)')
+        plt.legend()
+        plt.show()
+        pass
+
+        

@@ -1,4 +1,4 @@
-# Função principal da classe desempenho
+# Função principal da classe desempenho - 2023
 
 from desempenho import desempenho
 import os
@@ -83,12 +83,22 @@ print(f"O raio para realizar uma curva de {det1.phi_turn:.3}° é: {det1.manobra
 print(f"O tempo para realizar uma curva de {det1.phi_turn:.3}° é: {det1.manobra()[2]:.4} s")
 print(f"A velocidade angular para um ângulo de curva de {det1.phi_turn:.3}° é: {det1.manobra()[3]:.4} rad/s\n")
 
-# Pouso
-print(f"A distância de pouso (FAR-23) é de {det1.pouso()[0]:.6} m")
-print(f"A distância de pouso real é de {det1.pouso()[1]:.6} m")
-print(f"O ângulo de planeio mínimo para pouso é {det1.pouso()[2]:.4}°")
-print(f"A velocidade para o ângulo de planeio mínimo (máx distânca) é {det1.pouso()[3]:.5} m/s\n")
+# Descida
+print(f"O ângulo de planeio para a máxima distância de planeio é {det1.descida()[0]:.3} °")
+print(f"A velocidade de planeio para a condição de máxima distância de planeio é {det1.descida()[1]:.4} m/s")
+print(f"A distância de descida para a máxima eficiência aerodinâmica é {det1.descida()[2]:.4} m")
+print(f'A razão de descida para a condição de máxima eficiência aerodinâmica é {det1.descida()[3]:.4} m/s')
+print(f'A mínima razão de descida é {det1.descida()[4]:.4} m/s')
+print(f'A velocidade durante a mínima razão de descida é {det1.descida()[5]:.5} m/s')
+print(f'O ângulo durante a mínima razão de descida é {det1.descida()[6]:.4} °')
+print(f'O tempo de descida é de {det1.descida()[7]:.4} s\n')
 
-# Teto de voo
+# Pouso
+#print(f"A distância de pouso (FAR-23) é de {det1.pouso()[0]:.6} m")
+#print(f"A distância de pouso real é de {det1.pouso()[1]:.6} m")
+#print(f"O ângulo de planeio mínimo para pouso é {det1.pouso()[2]:.4}°")
+#print(f"A velocidade para o ângulo de planeio mínimo (máx distânca) é {det1.pouso()[3]:.5} m/s\n")
+
+# Envelope de voo
 
 # Carga útil em função da altitude-densidade
